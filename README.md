@@ -371,3 +371,46 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 
 - `/docs/assets/index-Btr5O6c6.js`
 - `/docs/assets/index-D5MI4ano.css`
+
+## Stage 4 · 四角浮层与漫画气泡
+
+### 仓库根目录与部署目录
+
+解压后，包含 `/README.md`、`/package.json`、`/src/` 和 `/docs/` 的这一层就是仓库根目录 `/`。部署时，用本包的 `/docs/` 完整替换仓库根目录下的 GitHub Pages 发布目录。以下文件路径从仓库根目录起算。
+
+### 浮层与漫画气泡
+
+- 正文恢复全宽。角色可停靠在正文的四角，设置有小、中、大三档。拖动到另一侧会吸附到最近的角落，写入和其它设置相同的本地数据库。极窄屏先显示小头像，点按后展开。
+- 书页浮层限制在正文区域内。靠近停靠角色会降低不透明度。羽毛笔模式下角色半透明，触摸可以穿透。计时侧栏使用单独的区域。
+- 入场和语言确认的气泡持续显示到离场或关闭。中心和角落气泡随角色移动，会根据空间向两侧翻转。在狭窄空间，气泡移到头部上方或下方。角落气泡约 5.5 秒后淡出，点击角色可重放上一句。
+- 设置中的「暂时隐藏角色 10 分钟」会保存结束时间，刷新后仍然有效。也可以从同一个位置立即恢复角色。
+- 角色尺寸、气泡字号、头部锚点、淡化强度、停靠边距与时长见 `/src/companions/states.ts`。各角色素材路径仍在 `/src/companions/`。舞台组件和气泡定位逻辑分别位于 `/src/components/CenterStage.tsx` 与 `/src/companions/useSpeechPlacement.ts`。
+
+### 新增文件
+
+- `/docs/assets/index-CCyIrDaz.js`
+- `/docs/assets/index-DfGhRGGT.css`
+- `/src/companions/useSpeechPlacement.ts`
+
+### 修改文件
+
+- `/README.md`
+- `/docs/index.html`
+- `/docs/sw.js`
+- `/src/companions/states.ts`
+- `/src/companions/types.ts`
+- `/src/companions/useCompanion.ts`
+- `/src/components/CenterStage.tsx`
+- `/src/components/CompanionSettings.tsx`
+- `/src/components/ReadingCompanion.tsx`
+- `/src/i18n.ts`
+- `/src/main.tsx`
+- `/src/memory.ts`
+- `/src/reader.tsx`
+- `/src/style.css`
+- `/src/tokens.css`
+
+### 删除文件
+
+- `/docs/assets/index-B12d6GRD.js`
+- `/docs/assets/index-C8lwbtML.css`
