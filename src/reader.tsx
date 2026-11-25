@@ -14,6 +14,7 @@ import { eraserSizes, quill } from "./config";
 import { sentencesOf } from "./sentences";
 import type { Annotation, Highlight, Ink, QuillStroke } from "./memory";
 import { WordCard } from "./components/WordCard";
+import { useChapterCoverage } from "./cards/useChapterCoverage";
 type Props = ReaderProps & {
   annotations: Annotation[];
   changeAnnotations: (
@@ -21,6 +22,9 @@ type Props = ReaderProps & {
     deletions?: string[],
   ) => Promise<boolean>;
   backLabel: string;
+  chapterFinished: (key: string) => boolean;
+  onCardEarned: () => void;
+  onCardError: () => void;
   onTimer: () => void;
   companionRole?: Role;
   companionWords: Word[];
@@ -45,7 +49,7 @@ export function Reader(props: Props) {
     format,
     setFormat,
     error,
-    turn,
+    turn: turnPage,
     open,
     go,
     change,
@@ -136,6 +140,23 @@ export function Reader(props: Props) {
   const end = scroll
     ? chapter.text.length
     : (pages[page + 1] ?? chapter.text.length);
+  const coverage = useChapterCoverage({
+    box, chapter: ch, text: chapter.text, start, end, scroll, writing,
+    paused: Boolean(alarm || word || props.companionBlocked),
+    finished: props.chapterFinished,
+    onAward: props.onCardEarned,
+    onError: props.onCardError,
+  });
+  const [unread, setUnread] = React.useState(false);
+  const finalPage = ch === book.chapters.length - 1 &&
+    (scroll || page === pages.length - 1);
+  React.useEffect(() => setUnread(false), [ch, page, coverage.complete]);
+  function turn(direction: number) {
+    const captured = coverage.capture(direction > 0 && (scroll || page === pages.length - 1));
+    if (direction > 0 && finalPage) {
+      void captured.then((done) => setUnread(!done));
+    } else turnPage(direction);
+  }
   const tools = useQuill({
     box,
     enabled: writing,
@@ -462,7 +483,10 @@ export function Reader(props: Props) {
           <select
             aria-label={t("chapter")}
             value={ch}
-            onChange={(e) => go(+e.target.value)}
+            onChange={(e) => {
+              void coverage.capture();
+              go(+e.target.value);
+            }}
           >
             {book.chapters.map((c, i) => (
               <option key={i} value={i}>
@@ -569,15 +593,13 @@ export function Reader(props: Props) {
                 : t("page") + " " + (page + 1) + " / " + pages.length}
             </small>
             <button
-              disabled={
-                ch === book.chapters.length - 1 &&
-                (scroll || page === pages.length - 1)
-              }
+              disabled={finalPage && coverage.complete}
               onClick={() => turn(1)}
             >
-              {t("next")}
+              {t(finalPage ? coverage.complete ? "cardsFinished" : "cardsFinish" : "next")}
             </button>
           </footer>
+          {unread && !coverage.complete && <small role="status">{t("cardsUnread")}</small>}
         </article>
       </ReadingCompanion>
       {word && <WordCard {...state} t={t} prefs={prefs} />}

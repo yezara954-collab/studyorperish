@@ -414,3 +414,58 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 
 - `/docs/assets/index-B12d6GRD.js`
 - `/docs/assets/index-C8lwbtML.css`
+
+## Stage 5 · 盲盒贺卡
+
+### 仓库根目录与部署
+
+解压后，包含 `README.md`、`package.json`、`src/` 和 `docs/` 的这一层是仓库根目录 `/`。手动更新 GitHub Pages 时，用本包的 `/docs/` 替换原发布目录，保持站点地址和发布路径。后续改源码后，用 `npm run build` 重新生成 `/docs/`。如果已经加入自己的卡片素材，把它们同步到源码的 `/public/cards/`，以后构建会一起复制。
+
+### 获得、拆封和备份
+
+- 翻页模式下，读过本章所有页面后在章末点「下一页」或「读完本章」。滚动模式下，读过完整正文并滚到底即可领取，短章节可用章末按钮。章节以正文和章节序号去重，重复导入相同内容也只发一盒。
+- 每累计 100 次符合条件的复习发一盒。以设备本地日期和单词去重，未满 100 的进度跨天保留。Stage 5 开始记录每日资格。旧版累计复习数据继续用于原来的复习统计。
+- 导航「卡片」显示未拆数量。点击信封后结果保存在本地，划过蜡封或点「拆开蜡封」可揭晓。关闭或刷新时，已选中的信封可继续拆封。若在动画期间刷新，已拆的卡片保存在图鉴。
+- 图鉴有 5 个系列、30 个卡位，可筛选稀有度。重复卡在原卡位累计。点已获得卡片可看首次获得时间和数量，拖动可倾斜，点单词缎带可查释义并存进单词垃圾桶。
+- 图鉴下方「卡片备份」可导入或导出 JSON，包括库存、已确定的结果、收藏和复习奖励进度。导入按奖励来源合并，重复导入同一备份不会增加库存。
+
+### 替换素材和调整参数
+
+- 30 张卡、画面动效备注、抽卡概率和拆封音效路径在 `/src/cards/config.ts`。默认概率是普通 60%、稀有 30%、传说 10%。每个稀有度优先抽取该池内未收集的卡。
+- 每张卡的海报用 `/public/cards/01/poster.webp`，循环视频用 `/public/cards/01/loop.mp4`，编号为 `01` 至 `30`。可使用 3–5 秒、无声的 H.264 MP4。若直接替换部署成品，则放到 `/docs/cards/01/` 等对应编号目录。海报在卡片进入可见区时加载。视频仅在卡片放大且可见时加载播放，退回海报或 CSS 占位卡时仍可正常收藏和查词。
+- 音效路径留空时用 Web Audio 合成，跟随设置中的声音开关。系统开启「减少动态效果」时，拆封用淡入，暂停循环动效。界面尺寸、颜色和动画样式在 `/src/tokens.css`，卡名、释义和界面文案在 `/src/i18n.ts`。
+
+### 相对 Stage 4 四角浮层版的文件变更
+
+#### 新增
+
+- `/docs/assets/index-B1Woxewf.js`
+- `/docs/assets/index-DkykZvQQ.css`
+- `/src/cards/CardFace.tsx`
+- `/src/cards/Cards.tsx`
+- `/src/cards/audio.ts`
+- `/src/cards/cards.css`
+- `/src/cards/config.ts`
+- `/src/cards/storage.ts`
+- `/src/cards/useChapterCoverage.ts`
+
+#### 修改
+
+- `/README.md`
+- `/docs/index.html`
+- `/docs/sw.js`
+- `/scripts/cache.mjs`
+- `/src/config.ts`
+- `/src/i18n.ts`
+- `/src/main.tsx`
+- `/src/memory.ts`
+- `/src/reader.tsx`
+- `/src/style.css`
+- `/src/tokens.css`
+- `/src/useLibrary.ts`
+
+#### 替换后移除的旧构建文件
+
+- `/docs/assets/index-CCyIrDaz.js`
+- `/docs/assets/index-DfGhRGGT.css`
+

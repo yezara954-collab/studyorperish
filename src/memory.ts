@@ -1,5 +1,10 @@
 import { focusStateKey, isFocusData } from "./focusTimer";
 import { committed, db, stores } from "./books";
+import {
+  cardsStateKey, chapterProgressPrefix, emptyLedger, mergeCards, recordReviewReward,
+  validCardLedger, validChapterProgress, type CardLedger,
+} from "./cards/storage";
+import { cardRules } from "./cards/config";
 
 type Anchor = { bookId: string; chapter: number; start: number };
 export type Highlight = Anchor & {
@@ -64,15 +69,17 @@ export async function writeAnnotations(
 }
 
 // Read-modify-write within one transaction so collecting a word again preserves its schedule.
-export async function collectWord(word: Word) {
+export async function collectWord(word: Word, preserveDefinition = false) {
   const transaction = (await db).transaction("bin", "readwrite");
   const bin = transaction.objectStore("bin");
   const existing = bin.get(word.w);
   existing.onsuccess = () =>
     bin.put(
       {
-        ...word,
-        entry: word.entry ?? existing.result?.entry,
+        ...(preserveDefinition && existing.result ? existing.result : word),
+        entry: preserveDefinition
+          ? existing.result?.entry ?? word.entry
+          : word.entry ?? existing.result?.entry,
         review: existing.result?.review,
       },
       word.w,
@@ -85,6 +92,7 @@ export async function gradeWord(key: string, grade: Grade, now = Date.now()) {
   const bin = transaction.objectStore("bin");
   const state = transaction.objectStore("state");
   const request = bin.get(key);
+  let reward: { ledger: CardLedger; granted: boolean } | undefined;
   request.onsuccess = () => {
     const word = request.result as Word | undefined;
     if (!word || (word.review?.dueAt ?? 0) > now) return;
@@ -108,6 +116,9 @@ export async function gradeWord(key: string, grade: Grade, now = Date.now()) {
       },
       key,
     );
+    recordReviewReward(state, word.w, now, (ledger, granted) => {
+      reward = { ledger, granted };
+    });
     const stats = state.get(reviewStatsKey);
     stats.onsuccess = () => {
       const value = (stats.result ?? initialStats) as ReviewStats;
@@ -121,15 +132,19 @@ export async function gradeWord(key: string, grade: Grade, now = Date.now()) {
     };
   };
   await committed(transaction);
+  return reward;
 }
 
-// Stage 5 uses completed reviews as an accumulating counter, including repeat sessions.
+// Review history continues to report all completed grades.
 export async function getReviewProgress() {
   const transaction = (await db).transaction("state");
-  const request = transaction.objectStore("state").get(reviewStatsKey);
+  const state = transaction.objectStore("state");
+  const request = state.get(reviewStatsKey);
+  const rewards = state.get(cardsStateKey);
   await committed(transaction);
   const stats = (request.result ?? initialStats) as ReviewStats;
-  return { ...stats, milestones: Math.floor(stats.totalReviews / 100) };
+  const eligibleReviews = Object.keys((rewards.result ?? emptyLedger).reviews).length;
+  return { ...stats, eligibleReviews, milestones: Math.floor(eligibleReviews / cardRules.reviewsPerBox) };
 }
 
 type BackupRows = Record<(typeof stores)[number], [string, unknown][]>;
@@ -205,7 +220,14 @@ export async function importBackupJSON(json: string) {
   const transaction = (await db).transaction([...stores], "readwrite");
   for (const name of stores) {
     const store = transaction.objectStore(name);
-    for (const [key, value] of rows[name]) store.put(value, key);
+    for (const [key, value] of rows[name]) {
+      if (name === "state" && key === cardsStateKey && validCardLedger(value)) {
+        const current = store.get(key);
+        current.onsuccess = () => {
+          store.put(current.result ? mergeCards(current.result, value) : value, key);
+        };
+      } else store.put(value, key);
+    }
   }
   await committed(transaction);
 }
@@ -289,6 +311,8 @@ function validBackupRecord(store: keyof BackupRows, key: string, record: any) {
     return (
       nonnegative(record.totalReviews) && nonnegative(record.reviewedWords)
     );
+  if (key === cardsStateKey) return validCardLedger(record);
+  if (key.startsWith(chapterProgressPrefix)) return validChapterProgress(key, record);
   if (key === focusStateKey) return isFocusData(record);
   if (key === "prefs")
     return (

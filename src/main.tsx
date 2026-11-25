@@ -20,6 +20,8 @@ import { Icon, Sigil } from "./components/Icons";
 import { Bookshelf } from "./components/Bookshelf";
 import { TrashBin } from "./components/TrashBin";
 import { useLibrary } from "./useLibrary";
+import { Cards } from "./cards/Cards";
+import { unopenedBoxes } from "./cards/storage";
 import { illustrations, quill } from "./config";
 import "./style.css";
 
@@ -50,6 +52,7 @@ function App() {
   const activeRole = useCompanionRole(book?.id, prefs.companion, library.ready);
   const speaker = roles.draco;
   const companionHidden = useCompanionHidden(prefs.companion.hiddenUntil);
+  const unopened = React.useMemo(() => unopenedBoxes(library.cardLedger).length, [library.cardLedger]);
   return (
     <>
       <FocusTimer
@@ -76,6 +79,7 @@ function App() {
                   ["shelf", "shelf", t("bookshelf")],
                   ["bin", "bin", t("trashBin")],
                   ["notebook", "notebook", t("notebook")],
+                  ["cards", "cards", t("cardsNav")],
                 ].map(([v, i, s]) => (
                   <button
                     className={view === v ? "active" : ""}
@@ -85,6 +89,9 @@ function App() {
                     <Icon name={i} />
                     {s}
                     {v === "bin" && bin.length > 0 && " · " + bin.length}
+                    {v === "cards" && unopened > 0 && (
+                      <span className="cards-nav-badge" aria-label={t("cardsUnopenedCount").replace("{count}", String(unopened))}>{unopened}</span>
+                    )}
                   </button>
                 ))}
                 <button
@@ -112,6 +119,9 @@ function App() {
             add={collectWord}
             onBack={() => setBook(null)}
             onTimer={() => setTimerOpened(true)}
+            chapterFinished={(key) => Object.hasOwn(library.cardLedger.boxes, key)}
+            onCardEarned={() => void library.cardsChanged(true)}
+            onCardError={library.cardError}
             companionRole={activeRole}
             companionWords={bin}
             companionHidden={companionHidden}
@@ -133,14 +143,14 @@ function App() {
                     ? t("wordTrashBin")
                     : view === "notebook"
                       ? t("notebook")
-                      : t("theBookshelf")}
+                      : t(view === "cards" ? "cardsHeading" : "theBookshelf")}
                 </h1>
                 <p>
                   {view === "bin"
                     ? t("wordsGatheredFromYourReading")
                     : view === "notebook"
                       ? t("notebookSubtitle")
-                      : t("yourPersonalCollectionOfEnchantedVolumes")}
+                      : t(view === "cards" ? "cardsIntro" : "yourPersonalCollectionOfEnchantedVolumes")}
                 </p>
               </div>
               <illustrations.Banner />
@@ -149,6 +159,10 @@ function App() {
               <Bookshelf {...library} />
             ) : view === "notebook" ? (
               <Notebook {...library} />
+            ) : view === "cards" ? (
+              <Cards t={t} lang={prefs.lang} ledger={library.cardLedger}
+                onChange={library.cardsChanged} onNotice={setNotice}
+                saveWord={library.collectCardWord} sound={prefs.focusSound} />
             ) : (
               <TrashBin {...library} />
             )}
@@ -355,6 +369,11 @@ function App() {
             )}
           </dialog>
         </div>
+      )}
+      {library.cardNotice > 0 && (
+        <button key={library.cardNotice} className="notice cards-arrival" role="status" onClick={library.dismissCardNotice}>
+          {t("cardsArrived")} ×
+        </button>
       )}
       {notice && (
         <button className="notice" role="status" onClick={() => setNotice("")}>

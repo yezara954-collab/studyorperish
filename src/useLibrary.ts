@@ -9,7 +9,8 @@ import {
   type Word,
   type Grade,
 } from "./memory";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { emptyLedger, loadCards, type CardLedger } from "./cards/storage";
 import { starters, Book, read, save } from "./books";
 import { expandLegacyHighlights } from "./sentences";
 import { importBook } from "./import";
@@ -36,10 +37,13 @@ const defaultPrefs = {
 export function useLibrary() {
   const [books, setBooks] = useState<Book[]>(starters),
     [bin, setBin] = useState<Word[]>([]),
+    [cardLedger, setCardLedger] = useState<CardLedger>(emptyLedger),
+    [cardNotice, setCardNotice] = useState(0),
     [annotations, setAnnotations] = useState<Annotation[]>([]),
     [reviewProgress, setReviewProgress] = useState({
       totalReviews: 0,
       reviewedWords: 0,
+      eligibleReviews: 0,
       milestones: 0,
     }),
     [prefs, setPreferences] = useState(defaultPrefs),
@@ -71,6 +75,7 @@ export function useLibrary() {
             setNotice(t("annotationSaveFailed")),
           );
         setReviewProgress(await getReviewProgress());
+        setCardLedger(await loadCards());
         const stored = await read("state", "prefs");
         setPreferences({
           ...defaultPrefs,
@@ -111,6 +116,40 @@ export function useLibrary() {
     }
     document.documentElement.lang = zh ? "zh-CN" : "en";
   }, [zh]);
+  const ledgerRevision = useRef(0);
+  async function syncCards() {
+    const revision = ++ledgerRevision.current;
+    const ledger = await loadCards();
+    if (revision === ledgerRevision.current) setCardLedger(ledger);
+    return ledger;
+  }
+  useEffect(() => {
+    const refresh = () => void syncCards().catch(() => {});
+    window.addEventListener("focus", refresh);
+    const changes = typeof BroadcastChannel === "function" ? new BroadcastChannel("vesper-cards") : null;
+    if (changes) changes.onmessage = refresh;
+    return () => {
+      window.removeEventListener("focus", refresh);
+      changes?.close();
+    };
+  }, []);
+  useEffect(() => {
+    if (!cardNotice) return;
+    const timeout = setTimeout(() => setCardNotice(0), 4200);
+    return () => clearTimeout(timeout);
+  }, [cardNotice]);
+  function cardError() {
+    setNotice(t("cardsSaveFailed"));
+  }
+  async function cardsChanged(earned = false) {
+    if (earned) setCardNotice((current) => current + 1);
+    if (typeof BroadcastChannel === "function") {
+      const changes = new BroadcastChannel("vesper-cards");
+      changes.postMessage(null);
+      changes.close();
+    }
+    await syncCards().catch(cardError);
+  }
   function setPrefs(p: any) {
     setPreferences(p);
     save("state", "prefs", p).catch(() =>
@@ -154,6 +193,10 @@ export function useLibrary() {
     await storeWord({ ...word, source: book.title });
     setBin(await read("bin"));
   }
+  async function collectCardWord(word: Word) {
+    await storeWord(word, true);
+    setBin(await read("bin"));
+  }
   async function changeAnnotations(
     updates: Annotation[],
     deletions: string[] = [],
@@ -190,7 +233,8 @@ export function useLibrary() {
   }
   async function reviewWord(key: string, grade: Grade) {
     try {
-      await gradeWord(key, grade);
+      const reward = await gradeWord(key, grade);
+      if (reward) void cardsChanged(reward.granted);
       setBin(await read("bin"));
       setReviewProgress(await getReviewProgress());
     } catch {
@@ -201,6 +245,7 @@ export function useLibrary() {
     setBook(null);
     setView(v);
     setNotice("");
+    if (v === "cards") void syncCards().catch(cardError);
   }
   const ordered =
     sort === "title"
@@ -209,6 +254,12 @@ export function useLibrary() {
   return {
     books,
     bin,
+    cardLedger,
+    cardNotice,
+    dismissCardNotice: () => setCardNotice(0),
+    cardsChanged,
+    cardError,
+    collectCardWord,
     prefs,
     view,
     book,
