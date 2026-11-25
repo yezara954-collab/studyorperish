@@ -47,4 +47,12 @@ export type CompanionSettings = {
   position: "top" | "bottom";
   focus: boolean;
   userName: string;
+  preview: boolean;
+};
+
+export type CompanionPreview = {
+  cue: LineState;
+  id: number;
+  role: CompanionId;
+  focus: boolean;
 };

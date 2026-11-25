@@ -140,6 +140,7 @@ function validCompanion(value: unknown) {
   return (
     typeof v.enabled === "boolean" &&
     typeof v.focus === "boolean" &&
+    (v.preview === undefined || typeof v.preview === "boolean") &&
     ["rotate", "fixed"].includes(v.mode ?? "") &&
     ["draco", "harry", "ron", "hermione"].includes(v.fixed ?? "") &&
     ["top", "bottom"].includes(v.position ?? "") &&

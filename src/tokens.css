@@ -336,8 +336,6 @@
 :root {
   --companion-gutter: 157px;
   --companion-narrow-dock: 118px;
-  --companion-actor-width: 108px;
-  --companion-narrow-width: 88px;
   --companion-speech-width: 140px;
   --companion-speech-expanded: min(195px, 60vw);
   --companion-edge: 72px;
@@ -362,4 +360,18 @@
   --companion-red: #9b4d41;
   --companion-broom-color: #825b3d;
   --companion-opacity-full: 1;
+}
+
+
+:root {
+  --center-bubble-max: 520px;
+  --center-tail: 8px;
+  --center-dialogue-line: 1.34;
+  --center-book-height-frac: .57;
+  --center-book-landscape-frac: .88;
+  --center-landscape-width: 620px;
+  --center-landscape-line: min(48vw, 360px);
+  --companion-side-tail: 18px;
+  --center-toolbar-padding: 5px 6px 8px;
+  --center-confirm-padding: clamp(16px, 3vw, 28px);
 }

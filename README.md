@@ -328,3 +328,46 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 
 - `/docs/assets/index-BcK0i3oc.css`
 - `/docs/assets/index-DGPeKoVu.js`
+
+## Stage 4 修订版 · CenterStage
+
+### 仓库根目录与部署目录
+
+解压后，包含 `/README.md`、`/package.json`、`/src/` 和 `/docs/` 的那一层就是仓库根目录 `/`。部署时，用本包的 `/docs/` 完整替换仓库根目录下的 GitHub Pages 发布目录。以下文件路径从仓库根目录起算。
+
+### 检查动画与状态
+
+- 入场在书页的可见区域中央播放 hero 舞台。弧线飞入后悬停约 3 秒，点击任意处或到时后飞到角落。专注模式直接落座，系统减少动态效果时使用淡入。
+- 从设置切换中文时，Draco 用同一 hero 舞台询问 “Are you sure?”。中心互动使用 center 舞台。三档尺寸和时长在 `/src/companions/states.ts`，角色图片路径仍在 `/src/companions/` 的各角色配置。
+- 羽毛笔模式下，角色缩小并半透明地留在角落。中心互动等待切回阅读后再执行，角落状态时钟继续走。羽毛笔二级工具栏可横向滑动。
+- 「预览状态」现在位于「设置 → 开发者 / 预览」，打开开关才可用。触发后设置自动收起，当前演示状态会显示标签。自动运行时隐藏标签。
+- 赫敏只有在词库至少有 3 个词时才出题。其他情况提示先加词。
+
+### 新增文件
+
+- `/docs/assets/index-B12d6GRD.js`
+- `/docs/assets/index-C8lwbtML.css`
+- `/src/components/CenterStage.tsx`
+
+### 修改文件
+
+- `/README.md`
+- `/docs/index.html`
+- `/docs/sw.js`
+- `/src/companions/states.ts`
+- `/src/companions/types.ts`
+- `/src/companions/useCompanion.ts`
+- `/src/components/CompanionSettings.tsx`
+- `/src/components/ReadingCompanion.tsx`
+- `/src/components/SwitchConfirmation.tsx`
+- `/src/i18n.ts`
+- `/src/main.tsx`
+- `/src/memory.ts`
+- `/src/reader.tsx`
+- `/src/style.css`
+- `/src/tokens.css`
+
+### 删除文件
+
+- `/docs/assets/index-Btr5O6c6.js`
+- `/docs/assets/index-D5MI4ano.css`

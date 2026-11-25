@@ -1,6 +1,9 @@
 import site from "./site.json";
 export const messages = {
-  companionConfirmAlt: ["Sure you want to switch, {name}?", "Sure you want to switch, {name}?"],
+  companionConfirmAlt: [
+    "Sure you want to switch, {name}?",
+    "Sure you want to switch, {name}?",
+  ],
   dracoName: ["Draco", "德拉科"],
   dracoPersonality: ["Sharp-tongued · competitive", "毒舌 · 好胜"],
   draco_arrive0: [
@@ -172,8 +175,14 @@ export const messages = {
   companionPreviewState: ["Companion state", "陪读状态"],
   companionAnswer: ["Tap to reveal", "点角色查看答案"],
   companionNoWords: [
-    "Save a word to your Trash Bin, then I’ll quiz you.",
-    "先往单词垃圾桶里存一个词，我再考你。",
+    "Add some words to the Trash Bin first.",
+    "请先往单词垃圾桶里加几个词。",
+  ],
+  developerPreview: ["Developer / Preview", "开发者 / 预览"],
+  developerPreviewEnable: ["Enable state previews", "启用状态预览"],
+  developerPreviewOpenBook: [
+    "Open a book with a reading companion to preview states.",
+    "打开一本书并启用陪读角色，即可预览状态。",
   ],
   companionQuizWord: ["What does {word} mean?", "{word} 是什么意思？"],
   companionQuizDefinition: [

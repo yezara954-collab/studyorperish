@@ -1,7 +1,11 @@
 import React from "react";
 import { companionIds, roles } from "../companions";
 import { companionStates } from "../companions/states";
-import type { CompanionSettings as Settings } from "../companions/types";
+import {
+  lineStates,
+  type CompanionSettings as Settings,
+  type LineState,
+} from "../companions/types";
 import type { Translate } from "../i18n";
 
 export function CompanionSettings({
@@ -97,6 +101,66 @@ export function CompanionSettings({
           }
         />
       </label>
+    </fieldset>
+  );
+}
+
+export function CompanionDeveloper({
+  settings,
+  change,
+  available,
+  preview,
+  t,
+}: {
+  settings: Settings;
+  change: (value: Settings) => void;
+  available: boolean;
+  preview: (cue: LineState) => void;
+  t: Translate;
+}) {
+  const [selected, setSelected] = React.useState<LineState>("reading");
+  const options = settings.focus
+    ? (["reading", "sleeping"] as const)
+    : lineStates;
+  const cue = options.some((value) => value === selected)
+    ? selected
+    : "reading";
+  return (
+    <fieldset className="companion-settings">
+      <legend>{t("developerPreview")}</legend>
+      <label>
+        <input
+          type="checkbox"
+          checked={settings.preview}
+          onChange={(event) =>
+            change({ ...settings, preview: event.target.checked })
+          }
+        />{" "}
+        {t("developerPreviewEnable")}
+      </label>
+      {settings.preview && (
+        <>
+          <label>
+            {t("companionPreviewState")}{" "}
+            <select
+              aria-label={t("companionPreviewState")}
+              value={cue}
+              disabled={!available}
+              onChange={(event) => setSelected(event.target.value as LineState)}
+            >
+              {options.map((item) => (
+                <option key={item} value={item}>
+                  {t(`companionState_${item}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button disabled={!available} onClick={() => preview(cue)}>
+            {t("companionPreview")}
+          </button>
+          {!available && <small>{t("developerPreviewOpenBook")}</small>}
+        </>
+      )}
     </fieldset>
   );
 }

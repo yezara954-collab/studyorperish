@@ -1,6 +1,6 @@
 import { ReadingCompanion } from "./components/ReadingCompanion";
 import { FocusReaderContext } from "./components/FocusReaderContext";
-import type { Role } from "./companions/types";
+import type { CompanionPreview, Role } from "./companions/types";
 import type { Word } from "./memory";
 import React from "react";
 import { useReader, type ReaderProps } from "./useReader";
@@ -21,6 +21,8 @@ type Props = ReaderProps & {
   companionRole?: Role;
   companionWords: Word[];
   companionBlocked: boolean;
+  companionPreview?: CompanionPreview;
+  onCompanionPreviewApplied?: () => void;
 };
 export function Reader(props: Props) {
   const state = useReader(props);
@@ -297,7 +299,12 @@ export function Reader(props: Props) {
         </button>
       </div>
       {writing && (
-        <div className="memory-tools" role="group" aria-label={t("quillTool")}>
+        <div
+          className="memory-tools annotation-toolbar"
+          role="group"
+          aria-label={t("quillTool")}
+          tabIndex={0}
+        >
           <button
             disabled={busy}
             aria-pressed={mode === "ink"}
@@ -433,6 +440,8 @@ export function Reader(props: Props) {
         role={props.companionRole}
         settings={prefs.companion}
         words={props.companionWords}
+        preview={props.companionPreview}
+        onPreviewApplied={props.onCompanionPreviewApplied}
         drawing={drawing}
         writing={writing}
         blocked={Boolean(word) || props.companionBlocked}

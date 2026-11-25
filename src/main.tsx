@@ -1,7 +1,11 @@
 import { roles } from "./companions";
 import { useCompanionRole, firstLine } from "./companions/useCompanion";
-import { CompanionSettings } from "./components/CompanionSettings";
-import { CompanionPortrait } from "./components/ReadingCompanion";
+import {
+  CompanionDeveloper,
+  CompanionSettings,
+} from "./components/CompanionSettings";
+import { CenterStage, centerStageVariables } from "./components/CenterStage";
+import type { CompanionPreview } from "./companions/types";
 import { SwitchConfirmation } from "./components/SwitchConfirmation";
 import { FocusTimer } from "./components/FocusTimer";
 import { Notebook } from "./components/Notebook";
@@ -17,6 +21,9 @@ import "./style.css";
 
 function App() {
   const library = useLibrary();
+  const [companionPreview, setCompanionPreview] =
+    React.useState<CompanionPreview>();
+  const previewId = React.useRef(0);
   const [timerOpened, setTimerOpened] = React.useState(false);
   const {
     view,
@@ -37,7 +44,7 @@ function App() {
     setNotice,
   } = library;
   const activeRole = useCompanionRole(book?.id, prefs.companion, library.ready);
-  const speaker = activeRole ?? roles.draco;
+  const speaker = roles.draco;
   return (
     <>
       <FocusTimer
@@ -103,6 +110,10 @@ function App() {
             companionRole={activeRole}
             companionWords={bin}
             companionBlocked={Boolean(modal) || timerOpened}
+            onCompanionPreviewApplied={() => setCompanionPreview(undefined)}
+            companionPreview={
+              prefs.companion.preview ? companionPreview : undefined
+            }
           />
         ) : (
           <main className="desk">
@@ -142,6 +153,13 @@ function App() {
         <div className="veil" onClick={() => !busy && setModal("")}>
           <dialog
             open
+            className={
+              modal === "confirm" ? "switch-confirmation-dialog" : undefined
+            }
+            aria-labelledby={
+              modal === "confirm" ? "switch-confirmation-title" : undefined
+            }
+            style={modal === "confirm" ? centerStageVariables : undefined}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
               if (e.key === "Escape" && !busy) setModal("");
@@ -273,6 +291,22 @@ function App() {
                   t={t}
                   change={(companion) => setPrefs({ ...prefs, companion })}
                 />
+                <CompanionDeveloper
+                  settings={prefs.companion}
+                  t={t}
+                  available={Boolean(activeRole)}
+                  change={(companion) => setPrefs({ ...prefs, companion })}
+                  preview={(cue) => {
+                    if (!activeRole) return;
+                    setCompanionPreview({
+                      cue,
+                      id: ++previewId.current,
+                      role: activeRole.id,
+                      focus: prefs.companion.focus,
+                    });
+                    setModal("");
+                  }}
+                />
                 <button onClick={() => setModal("about")}>{t("about")}</button>
               </>
             ) : modal === "about" ? (
@@ -283,6 +317,7 @@ function App() {
             ) : (
               <SwitchConfirmation
                 title={t("confirmTitle")}
+                titleId="switch-confirmation-title"
                 prompt={firstLine(
                   speaker,
                   "chineseConfirm",
@@ -290,7 +325,18 @@ function App() {
                   prefs.companion.userName,
                 )}
                 speaker={t(speaker.displayName)}
-                portrait={<CompanionPortrait role={speaker} />}
+                stage={(prompt) => (
+                  <CenterStage
+                    role={speaker}
+                    pose="confirm"
+                    cue="chineseConfirm"
+                    face="surprised"
+                    size="hero"
+                    t={t}
+                    fadeLine
+                    dialogue={<p lang="en">{prompt}</p>}
+                  />
+                )}
                 detail={t("confirmBody")}
                 cancelLabel={t("keepEnglish")}
                 confirmLabel={t("switchChinese")}

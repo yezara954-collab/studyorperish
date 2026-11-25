@@ -11,6 +11,7 @@ export const companionDefaults: CompanionSettings = {
   position: "top",
   focus: false,
   userName: "",
+  preview: false,
 };
 const rotationKey = "study-or-perish:companion-rotation";
 
@@ -111,6 +112,7 @@ export function useCompanion(
   settings: CompanionSettings,
   t: Translate,
   blocked: boolean,
+  writing: boolean,
 ) {
   const [visit, setVisit] = useState(() => ({
     phase: (settings.focus ? "reading" : "arrive") as Phase,
@@ -121,9 +123,15 @@ export function useCompanion(
     speech: 0,
   }));
   const [bubble, setBubble] = useState(true);
+  const [pendingCenter, setPendingCenter] = useState(false);
   const cycle = settings.focus ? focusCycle : companionStates.cycle;
   function begin(state: LineState) {
-    const pose = poseFor(state);
+    const requested = poseFor(state);
+    if (writing && requested === "center") {
+      setPendingCenter(true);
+      return;
+    }
+    const pose = writing && requested === "arrive" ? "reading" : requested;
     const phase: Phase = pose === "center" ? "tauntCenter" : pose;
     setBubble(true);
     setVisit((v) => ({
@@ -151,11 +159,25 @@ export function useCompanion(
       return;
     }
     const index = cycle.findIndex(({ state }) => state === visit.phase);
-    begin(cycle[(index + 1) % cycle.length].state);
+    const upcoming = cycle[(index + 1) % cycle.length].state;
+    if (writing && upcoming === "tauntCenter") {
+      setPendingCenter(true);
+      begin(cycle[(index + 2) % cycle.length].state);
+    } else begin(upcoming);
   }
+  useLayoutEffect(() => {
+    if (writing && visit.pose === "center") {
+      setPendingCenter(true);
+      speak("reading", "reading");
+    }
+    if (!writing && !blocked && pendingCenter) {
+      setPendingCenter(false);
+      begin("tauntCenter");
+    }
+  }, [writing, blocked, pendingCenter, visit.pose]);
   const phaseMs =
     visit.phase === "arrive"
-      ? companionStates.arrivalMs
+      ? companionStates.entranceMs + companionStates.arrivalHoldMs
       : (cycle.find(({ state }) => state === visit.phase)?.durationMs ??
         cycle[0].durationMs);
   const visitMs =
@@ -179,6 +201,7 @@ export function useCompanion(
     ...visit,
     line: formatLine(visit.lineKey, t, settings.userName),
     bubble,
+    pendingCenter,
     begin,
     speak,
   };

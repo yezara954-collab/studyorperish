@@ -2,9 +2,10 @@ import React from "react";
 
 export function SwitchConfirmation({
   title,
+  titleId,
   prompt,
   speaker,
-  portrait,
+  stage,
   detail,
   cancelLabel,
   confirmLabel,
@@ -12,9 +13,10 @@ export function SwitchConfirmation({
   confirm,
 }: {
   title: string;
+  titleId?: string;
   prompt: string;
   speaker?: string;
-  portrait?: React.ReactNode;
+  stage?: (prompt: string) => React.ReactNode;
   detail?: string;
   cancelLabel: string;
   confirmLabel: string;
@@ -23,12 +25,11 @@ export function SwitchConfirmation({
 }) {
   return (
     <>
-      <h2>{title}</h2>
-      {portrait}
+      <h2 id={titleId}>{title}</h2>
       {speaker && <small>{speaker}</small>}
-      <p>{prompt}</p>
+      {stage ? stage(prompt) : <p>{prompt}</p>}
       {detail && <p>{detail}</p>}
-      <div className="memory-tools">
+      <div className="memory-tools switch-confirmation-actions">
         <button onClick={cancel}>{cancelLabel}</button>
         <button className="primary" onClick={confirm}>
           {confirmLabel}

@@ -2,16 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import type { Translate } from "../i18n";
 import type { Word } from "../memory";
 import {
-  lineStates,
   type CompanionSettings,
-  type Expression,
-  type LineState,
+  type CompanionPreview,
   type Role,
 } from "../companions/types";
 import { companionStates, faceFor } from "../companions/states";
 import { useCompanion } from "../companions/useCompanion";
+import { CenterStage, centerStageVariables } from "./CenterStage";
 
-type Preview = { cue: LineState; id: number; role: Role["id"]; focus: boolean };
 type Props = {
   role?: Role;
   settings: CompanionSettings;
@@ -23,75 +21,9 @@ type Props = {
   rail: boolean;
   t: Translate;
   children: React.ReactNode;
+  preview?: CompanionPreview;
+  onPreviewApplied?: () => void;
 };
-
-function Sketch({ pose, face }: { pose: string; face: Expression }) {
-  const airborne = pose === "arrive" || pose === "quidditch";
-  return (
-    <svg viewBox="0 0 96 92" aria-hidden="true" className="companion-sketch">
-      <g className="companion-figure">
-        {airborne && (
-          <g className="companion-broom">
-            <path d="M5 76 87 54" />
-            <path d="M9 69 1 80l22-2 3-7Z" />
-          </g>
-        )}
-        <path className="companion-robe" d="M28 52Q48 44 66 54l11 29H19z" />
-        <path className="companion-scarf" d="M34 49q13 7 28 0l3 8-17 5-15-6z" />
-        <ellipse className="companion-skin" cx="48" cy="33" rx="21" ry="20" />
-        <path
-          className="companion-hair"
-          d="M26 32Q20 11 41 9Q63 2 71 26L63 29Q53 20 46 20Q39 28 26 32Z"
-        />
-        {face === "sleepy" ? (
-          <path
-            className="companion-face-line"
-            d="M36 34q4 4 7 0m10 0q4 4 7 0m-14 7q2 1 4 0"
-          />
-        ) : (
-          <g className="companion-face-line">
-            <path d="M38 34h2m16 0h2" />
-            <path
-              d={
-                face === "surprised"
-                  ? "M47 41q3-3 5 0q0 4-4 3z"
-                  : "M44 42q5 3 10-2"
-              }
-            />
-          </g>
-        )}
-        {pose === "reading" && (
-          <path
-            className="companion-book"
-            d="M24 64q12-7 24 3q13-10 25-3v18q-13-4-25 3q-12-7-24-3z"
-          />
-        )}
-      </g>
-      {pose === "quidditch" && (
-        <circle className="companion-ball" cx="82" cy="18" r="6" />
-      )}
-      {pose === "sleeping" && (
-        <path
-          className="companion-sleep-mark"
-          d="M74 18h8l-8 8h8m4-19h7l-7 7h7"
-        />
-      )}
-    </svg>
-  );
-}
-
-export function CompanionPortrait({ role }: { role: Role }) {
-  const path = role.expressionSprites.surprised ?? role.sprite;
-  return (
-    <div className="companion-portrait" data-role={role.id} aria-hidden="true">
-      {path ? (
-        <img src={path} alt="" />
-      ) : (
-        <Sketch pose="reading" face="surprised" />
-      )}
-    </div>
-  );
-}
 
 function Actor({
   role,
@@ -103,13 +35,13 @@ function Actor({
   alarm,
   t,
   preview,
+  onPreviewApplied,
 }: Omit<Props, "role" | "children" | "rail"> & {
   role: Role;
-  preview?: Preview;
 }) {
   const [dragging, setDragging] = useState(false);
-  const pause = blocked || drawing || alarm || dragging;
-  const actor = useCompanion(role, settings, t, pause);
+  const pause = blocked || alarm || dragging;
+  const actor = useCompanion(role, settings, t, pause, writing);
   const anchor = useRef<HTMLDivElement>(null);
   const drag = useRef<{
     id: number;
@@ -119,15 +51,19 @@ function Actor({
   } | null>(null);
   const suppress = useRef(false);
   const appliedPreview = useRef(0);
+  const [previewRevision, setPreviewRevision] = useState<number>();
   const lastAlarm = useRef(false);
   const [quiz, setQuiz] = useState<Word>();
   const [answer, setAnswer] = useState(false);
 
   useEffect(() => {
-    if (!preview || preview.id === appliedPreview.current || pause) return;
+    if (!preview || preview.id === appliedPreview.current || pause || drawing)
+      return;
     appliedPreview.current = preview.id;
+    setPreviewRevision(actor.revision + 1);
     actor.begin(preview.cue);
-  }, [preview, pause]);
+    onPreviewApplied?.();
+  }, [preview, pause, drawing]);
 
   useEffect(() => {
     if (alarm && !lastAlarm.current && !settings.focus)
@@ -139,19 +75,31 @@ function Actor({
   useEffect(() => {
     setAnswer(false);
     setQuiz(
-      isQuiz ? words[Math.floor(Math.random() * words.length)] : undefined,
+      isQuiz && words.length >= companionStates.quizMinimum
+        ? words[Math.floor(Math.random() * words.length)]
+        : undefined,
     );
   }, [isQuiz, actor.revision, words]);
 
   const face = actor.cue === "dragged" ? role.dragFace : faceFor[actor.cue];
-  const art =
-    role.animation[actor.cue] ?? role.expressionSprites[face] ?? role.sprite;
-  const hidden = drawing || blocked || alarm;
+  const hidden = !writing && (drawing || blocked || alarm);
   const docked =
     writing &&
     (actor.pose === "center" ||
       actor.pose === "arrive" ||
       actor.pose === "quidditch");
+  const pose = docked ? "reading" : actor.pose;
+  const size =
+    pose === "arrive" ? "hero" : pose === "center" ? "center" : "corner";
+  const readyToLand = !pause && !writing && pose === "arrive";
+  const land = useRef(actor.begin);
+  land.current = actor.begin;
+  useEffect(() => {
+    if (!readyToLand) return;
+    const click = () => land.current("clicked");
+    document.addEventListener("click", click, true);
+    return () => document.removeEventListener("click", click, true);
+  }, [readyToLand]);
   const canDrag = actor.pose === "center" && !writing && !hidden;
   const definition = quiz?.entry?.[2]?.split("\n")[0]?.trim();
   const hint = quiz
@@ -189,29 +137,56 @@ function Actor({
         ref={anchor}
         className="companion-actor"
         data-role={role.id}
-        data-pose={docked ? "reading" : actor.pose}
+        data-pose={pose}
+        data-stage-size={size}
+        data-center-pending={actor.pendingCenter}
         data-state={actor.cue}
         data-dragging={dragging}
       >
-        <div className="companion-motion">
-          <button
-            type="button"
-            className="companion-body"
-            title={role.personality.map(t).join(" · ")}
-            aria-label={t(role.displayName)}
-            tabIndex={hidden || writing ? -1 : 0}
-            data-draggable={canDrag}
-            onClick={() => {
+        <CenterStage
+          role={role}
+          t={t}
+          pose={pose}
+          cue={docked ? "reading" : actor.cue}
+          face={docked ? "reading" : face}
+          size={size}
+          quiet={writing}
+          preview={settings.preview && actor.revision === previewRevision}
+          showDialogue={actor.bubble && !writing && !blocked && !alarm}
+          dialogue={
+            <>
+              <p>{isQuiz && !quiz ? hint : actor.line}</p>
+              {isQuiz && quiz && !dragging && (
+                <>
+                  <p>{hint}</p>
+                  {!answer && <small>{t("companionAnswer")}</small>}
+                </>
+              )}
+            </>
+          }
+          bodyProps={{
+            title: role.personality.map(t).join(" · "),
+            "aria-label": t(role.displayName),
+            tabIndex: hidden || writing ? -1 : 0,
+            ...{ "data-draggable": canDrag },
+            onClick: () => {
               if (suppress.current) {
                 suppress.current = false;
                 return;
               }
-              if (hidden || writing || settings.focus) return;
-              if (actor.pose === "arrive") actor.begin("clicked");
-              else if (isQuiz && quiz) setAnswer(true);
-              else if (actor.pose !== "center") actor.speak("praise");
-            }}
-            onPointerDown={(event) => {
+              if (
+                hidden ||
+                writing ||
+                settings.focus ||
+                actor.pose === "arrive"
+              )
+                return;
+              if (isQuiz && quiz) {
+                setAnswer(true);
+                actor.speak("praise");
+              } else if (actor.pose !== "center") actor.speak("praise");
+            },
+            onPointerDown: (event) => {
               suppress.current = false;
               if (!canDrag || !event.isPrimary || event.button !== 0) return;
               event.stopPropagation();
@@ -222,8 +197,8 @@ function Actor({
                 y: event.clientY,
                 moved: false,
               };
-            }}
-            onPointerMove={(event) => {
+            },
+            onPointerMove: (event) => {
               const touch = drag.current;
               if (!touch || touch.id !== event.pointerId) return;
               const x = event.clientX - touch.x,
@@ -240,33 +215,13 @@ function Actor({
               }
               anchor.current?.style.setProperty("--companion-drag-x", x + "px");
               anchor.current?.style.setProperty("--companion-drag-y", y + "px");
-            }}
-            onPointerUp={finish}
-            onPointerCancel={finish}
-            onLostPointerCapture={finish}
-            onDragStart={(event) => event.preventDefault()}
-          >
-            {art ? (
-              <img src={art} alt="" draggable={false} />
-            ) : (
-              <Sketch pose={docked ? "reading" : actor.pose} face={face} />
-            )}
-          </button>
-          <span className="companion-face-label">
-            {t(("companionFace_" + face) as Parameters<Translate>[0])}
-          </span>
-          {(actor.bubble || isQuiz) && !docked && (
-            <div className="companion-bubble" aria-live="polite">
-              <p>{actor.line}</p>
-              {isQuiz && !dragging && (
-                <>
-                  <p>{hint}</p>
-                  {quiz && !answer && <small>{t("companionAnswer")}</small>}
-                </>
-              )}
-            </div>
-          )}
-        </div>
+            },
+            onPointerUp: finish,
+            onPointerCancel: finish,
+            onLostPointerCapture: finish,
+            onDragStart: (event) => event.preventDefault(),
+          }}
+        />
       </div>
     </div>
   );
@@ -283,57 +238,62 @@ export function ReadingCompanion({
   alarm,
   rail,
   t,
+  preview,
+  onPreviewApplied,
 }: Props) {
-  const [selected, setSelected] = useState<LineState>("reading");
-  const [preview, setPreview] = useState<Preview>();
-  const count = useRef(0);
-  const cue =
-    settings.focus && selected !== "reading" && selected !== "sleeping"
-      ? "reading"
-      : selected;
-  const choices = settings.focus
-    ? (["reading", "sleeping"] as const)
-    : lineStates;
+  const page = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = page.current;
+    const article = element?.querySelector("article");
+    if (!element || !article || !role) return;
+    let frame = 0;
+    const update = () => {
+      const wrap = element.getBoundingClientRect(),
+        rect = article.getBoundingClientRect();
+      const top = Math.max(0, rect.top),
+        bottom = Math.min(innerHeight, rect.bottom);
+      const visible = bottom - top;
+      const middle =
+        visible > 0 ? (top + bottom) / 2 : (rect.top + rect.bottom) / 2;
+      element.style.setProperty(
+        "--companion-page-middle",
+        middle - wrap.top + "px",
+      );
+      element.style.setProperty(
+        "--companion-visible-area",
+        Math.max(0, visible) + "px",
+      );
+      element.style.setProperty(
+        "--companion-page-x",
+        (rect.left + rect.right) / 2 - wrap.left + "px",
+      );
+    };
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
+    const observer = new ResizeObserver(schedule);
+    observer.observe(element);
+    observer.observe(article);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    update();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [role, rail, settings.position]);
   return (
     <section className="companion-zone">
-      {role && (
-        <div className="memory-tools companion-previews">
-          <select
-            aria-label={t("companionPreviewState")}
-            value={cue}
-            onChange={(event) => setSelected(event.target.value as LineState)}
-          >
-            {choices.map((state) => (
-              <option key={state} value={state}>
-                {t(("companionState_" + state) as Parameters<Translate>[0])}
-              </option>
-            ))}
-          </select>
-          <button
-            disabled={drawing || blocked || alarm}
-            onClick={() =>
-              setPreview({
-                cue,
-                id: ++count.current,
-                role: role.id,
-                focus: settings.focus,
-              })
-            }
-          >
-            {t("companionPreview")}
-          </button>
-        </div>
-      )}
       <div
         className="companion-page"
         data-companion={Boolean(role)}
         data-companion-side={rail ? "left" : "right"}
         data-position={settings.position}
-        style={
-          {
-            "--companion-motion": companionStates.motionMs + "ms",
-          } as React.CSSProperties
-        }
+        ref={page}
+        style={centerStageVariables}
       >
         {children}
         {role && (
@@ -347,6 +307,7 @@ export function ReadingCompanion({
             blocked={blocked}
             alarm={alarm}
             t={t}
+            onPreviewApplied={onPreviewApplied}
             preview={
               preview?.role === role.id && preview.focus === settings.focus
                 ? preview
