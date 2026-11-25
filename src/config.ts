@@ -37,11 +37,35 @@ export const focus = {
   extensionMinutes: 5,
   maxMinutes: 1440,
   maxAnger: 3,
-  sounds: { howl: null as string | null, cry: null as string | null },
-  reminders: [
-    ["focusReminder0a", "focusReminder0b"],
-    ["focusReminder1a", "focusReminder1b"],
-    ["focusReminder2a", "focusReminder2b"],
-    ["focusReminder3a", "focusReminder3b"],
-  ],
+  defaultPartner: "howler",
+  partners: {
+    howler: {
+      name: "focusHowler",
+      image: null as string | null,
+      alertImage: null as string | null,
+    },
+    mandrake: {
+      name: "focusMandrake",
+      image: null as string | null,
+      alertImage: null as string | null,
+    },
+  },
+  sounds: {
+    howl: null as string | null,
+    cry: null as string | null,
+    chime: null as string | null,
+  },
+  howlerLines: ["focusHowl0", "focusHowl1", "focusHowl2", "focusHowl3"],
+  mandrakeLines: ["focusCry0", "focusCry1", "focusCry2", "focusCry3"],
+  speech: { rate: 1.21, pitch: 0.67, startDelayMs: 180, timeoutMs: 900 },
+  animation: {
+    repeatMs: 6000,
+    burstMs: 1600,
+    settleMs: 420,
+    mouthMs: 340,
+    mouthBeats: 4,
+    shakePx: [4, 6, 9, 12],
+    shakeMs: 155,
+  },
 } as const;
+export type FocusPartner = keyof typeof focus.partners;

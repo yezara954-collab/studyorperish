@@ -33,93 +33,101 @@ function App() {
   } = library;
   return (
     <>
-      <header>
-        <div className="mast">
-          <div className="brand">
-            <Sigil />
-            <span>{t("brand")}</span>
-          </div>
-          <nav>
-            {[
-              ["shelf", "shelf", t("bookshelf")],
-              ["bin", "bin", t("trashBin")],
-              ["notebook", "notebook", t("notebook")],
-            ].map(([v, i, s]) => (
-              <button
-                className={view === v ? "active" : ""}
-                key={v}
-                onClick={() => nav(v)}
-              >
-                <Icon name={i} />
-                {s}
-                {v === "bin" && bin.length > 0 && " · " + bin.length}
-              </button>
-            ))}
-            <button
-              aria-label={t("settings")}
-              onClick={() => setModal("settings")}
-            >
-              <Icon name="settings" />
-            </button>
-          </nav>
-        </div>
-      </header>
       <FocusTimer
         t={t}
+        lang={prefs.lang === "zh" ? "zh-CN" : "en-US"}
         opened={timerOpened}
         setOpened={setTimerOpened}
         preferencesReady={library.ready}
         sound={prefs.focusSound}
         vibration={prefs.focusVibration}
-      />
-      {book ? (
-        <Reader
-          key={book.id}
-          book={book}
-          backLabel={t(view === "notebook" ? "notebook" : "bookshelf")}
-          annotations={library.annotations}
-          changeAnnotations={library.changeAnnotations}
-          t={t}
-          initial={pos}
-          prefs={prefs}
-          setPrefs={setPrefs}
-          add={collectWord}
-          onBack={() => setBook(null)}
-          onTimer={() => setTimerOpened(true)}
-        />
-      ) : (
-        <main className="desk">
-          <section className="banner">
-            <div>
-              <div className="eyebrow">
-                <i /> {t("privateReadingRoom")}
+        shake={prefs.focusShake}
+        preference={prefs.focusPartner}
+        selectPartner={(focusPartner) => setPrefs({ ...prefs, focusPartner })}
+        reading={Boolean(book)}
+        header={
+          <header>
+            <div className="mast">
+              <div className="brand">
+                <Sigil />
+                <span>{t("brand")}</span>
               </div>
-              <h1>
-                {view === "bin"
-                  ? t("wordTrashBin")
-                  : view === "notebook"
-                    ? t("notebook")
-                    : t("theBookshelf")}
-              </h1>
-              <p>
-                {view === "bin"
-                  ? t("wordsGatheredFromYourReading")
-                  : view === "notebook"
-                    ? t("notebookSubtitle")
-                    : t("yourPersonalCollectionOfEnchantedVolumes")}
-              </p>
+              <nav>
+                {[
+                  ["shelf", "shelf", t("bookshelf")],
+                  ["bin", "bin", t("trashBin")],
+                  ["notebook", "notebook", t("notebook")],
+                ].map(([v, i, s]) => (
+                  <button
+                    className={view === v ? "active" : ""}
+                    key={v}
+                    onClick={() => nav(v)}
+                  >
+                    <Icon name={i} />
+                    {s}
+                    {v === "bin" && bin.length > 0 && " · " + bin.length}
+                  </button>
+                ))}
+                <button
+                  aria-label={t("settings")}
+                  onClick={() => setModal("settings")}
+                >
+                  <Icon name="settings" />
+                </button>
+              </nav>
             </div>
-            <illustrations.Banner />
-          </section>
-          {view === "shelf" ? (
-            <Bookshelf {...library} />
-          ) : view === "notebook" ? (
-            <Notebook {...library} />
-          ) : (
-            <TrashBin {...library} />
-          )}
-        </main>
-      )}
+          </header>
+        }
+      >
+        {book ? (
+          <Reader
+            key={book.id}
+            book={book}
+            backLabel={t(view === "notebook" ? "notebook" : "bookshelf")}
+            annotations={library.annotations}
+            changeAnnotations={library.changeAnnotations}
+            t={t}
+            initial={pos}
+            prefs={prefs}
+            setPrefs={setPrefs}
+            add={collectWord}
+            onBack={() => setBook(null)}
+            onTimer={() => setTimerOpened(true)}
+          />
+        ) : (
+          <main className="desk">
+            <section className="banner">
+              <div>
+                <div className="eyebrow">
+                  <i /> {t("privateReadingRoom")}
+                </div>
+                <h1>
+                  {view === "bin"
+                    ? t("wordTrashBin")
+                    : view === "notebook"
+                      ? t("notebook")
+                      : t("theBookshelf")}
+                </h1>
+                <p>
+                  {view === "bin"
+                    ? t("wordsGatheredFromYourReading")
+                    : view === "notebook"
+                      ? t("notebookSubtitle")
+                      : t("yourPersonalCollectionOfEnchantedVolumes")}
+                </p>
+              </div>
+              <illustrations.Banner />
+            </section>
+            {view === "shelf" ? (
+              <Bookshelf {...library} />
+            ) : view === "notebook" ? (
+              <Notebook {...library} />
+            ) : (
+              <TrashBin {...library} />
+            )}
+          </main>
+        )}
+      </FocusTimer>
       {modal && (
         <div className="veil" onClick={() => !busy && setModal("")}>
           <dialog
@@ -238,6 +246,18 @@ function App() {
                     {t("focusVibration")}
                   </label>
                 </div>
+                <label className="memory-field">
+                  <span>
+                    <input
+                      type="checkbox"
+                      checked={prefs.focusShake}
+                      onChange={(event) =>
+                        setPrefs({ ...prefs, focusShake: event.target.checked })
+                      }
+                    />{" "}
+                    {t("focusShake")}
+                  </span>
+                </label>
                 <button onClick={() => setModal("about")}>{t("about")}</button>
               </>
             ) : modal === "about" ? (

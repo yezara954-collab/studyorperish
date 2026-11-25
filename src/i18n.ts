@@ -1,5 +1,6 @@
 import site from "./site.json";
 export const messages = {
+  focusPlaySound: ["Play alert sound", "播放提醒音"],
   focusTimer: ["Study timer", "学习计时"],
   focusMinutes: ["Learning time (minutes)", "学习时长（分钟）"],
   focusCustom: ["Custom minutes", "自定义分钟数"],
@@ -26,37 +27,27 @@ export const messages = {
     "Break over. Ready to read again?",
     "休息结束，准备继续阅读了吗？",
   ],
-  focusReminder0a: [
-    "Time’s up. Go rest your eyes.",
-    "时间到。去休息一下眼睛。",
+  focusPartner: ["Timer partner", "计时伙伴"],
+  focusPreview: ["Preview alert", "预览提醒"],
+  focusHide: ["Collapse timer", "收起计时"],
+  focusExpand: ["Expand timer", "展开计时"],
+  focusShake: ["Screen shake", "屏幕抖动"],
+  focusHowl0: ["GET UP AND REST!", "滚起来休息！"],
+  focusHowl1: [
+    "GET UP AND REST! I COUNTED EVERY MINUTE!",
+    "滚起来休息！我一分钟都没少数！",
   ],
-  focusReminder0b: [
-    "That’s time. Mark your page and take a breath.",
-    "时间到了。夹好书签，喘口气。",
+  focusHowl2: ["ENOUGH! CLOSE THE BOOK AND GET UP!", "够了！合上书，站起来！"],
+  focusHowl3: [
+    "BOOK DOWN. ON YOUR FEET. REST. NOW!",
+    "把书放下！给我起来！马上休息！",
   ],
-  focusReminder1a: [
-    "Five more minutes are up. Give your eyes a break.",
-    "再读的五分钟到了，让眼睛休息一下。",
-  ],
-  focusReminder1b: [
-    "You asked for five minutes. I counted every one.",
-    "你要了五分钟。我一分钟都没少数。",
-  ],
-  focusReminder2a: [
-    "That was your second extension. Put the book down.",
-    "第二次延时结束。把书放下。",
-  ],
-  focusReminder2b: [
-    "I am getting louder. Take a break, please.",
-    "我要提高音量了。拜托，休息一下。",
-  ],
-  focusReminder3a: [
-    "ENOUGH. CLOSE THE BOOK AND REST YOUR EYES.",
-    "够了。合上书，让眼睛休息。",
-  ],
-  focusReminder3b: [
-    "STEP AWAY FROM THE PAGE. THE MANDRAKE AGREES.",
-    "离开书页！曼德拉草也同意。",
+  focusCry0: ["The mandrake needs a break.", "曼德拉草想休息了。"],
+  focusCry1: ["The mandrake is getting louder.", "曼德拉草哭得更大声了。"],
+  focusCry2: ["The mandrake is losing patience.", "曼德拉草快没耐心了。"],
+  focusCry3: [
+    "The mandrake refuses to stop screaming.",
+    "曼德拉草已经叫个不停了。",
   ],
   handwritingMode: ["Handwriting", "手写批注"],
   highlightMode: ["Highlighting", "高光批注"],

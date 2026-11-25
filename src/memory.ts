@@ -274,6 +274,9 @@ function validBackupRecord(store: keyof BackupRows, key: string, record: any) {
   if (key === focusStateKey) return isFocusData(record);
   if (key === "prefs")
     return (
+      [undefined, "howler", "mandrake"].includes(record.focusPartner) &&
+      (record.focusShake === undefined ||
+        typeof record.focusShake === "boolean") &&
       (record.focusSound === undefined ||
         typeof record.focusSound === "boolean") &&
       (record.focusVibration === undefined ||

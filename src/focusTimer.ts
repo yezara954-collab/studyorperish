@@ -1,5 +1,5 @@
 import { committed, db } from "./books";
-import { focus } from "./config";
+import { focus, type FocusPartner } from "./config";
 
 export const focusStateKey = "study-or-perish:focus";
 export const minute = 60_000;
@@ -19,10 +19,11 @@ type Session = {
   durationMs: number;
   studyMinutes: number;
   anger: number;
+  partner?: FocusPartner;
 };
 type Running = Session & { status: "running"; endsAt: number };
 type Paused = Session & { status: "paused"; remainingMs: number };
-type Alert = Session & { status: "alert"; message: number };
+type Alert = Session & { status: "alert"; message?: number };
 export type FocusSession = Running | Paused | Alert;
 export type FocusData = {
   session: FocusSession | null;
@@ -44,6 +45,7 @@ function start(
   studyMinutes: number,
   anger: number,
   now: number,
+  partner: FocusPartner,
 ): Running {
   const durationMs = minutes * minute;
   return {
@@ -52,6 +54,7 @@ function start(
     studyMinutes,
     anger,
     durationMs,
+    partner,
     startedAt: now,
     status: "running",
     endsAt: now + durationMs,
@@ -65,7 +68,7 @@ function record(data: FocusData, session: FocusSession, completed: boolean) {
 }
 
 export type FocusAction =
-  | { type: "start"; minutes: number }
+  | { type: "start"; minutes: number; partner: FocusPartner }
   | {
       type:
         | "advance"
@@ -83,7 +86,6 @@ export function transition(
   data: FocusData,
   action: FocusAction,
   now: number,
-  random = Math.random,
 ): FocusData {
   const current = data.session;
   if (action.type === "start") {
@@ -95,17 +97,17 @@ export function transition(
       minutes > focus.maxMinutes
     )
       return data;
-    return { ...data, session: start("study", minutes, minutes, 0, now) };
+    return {
+      ...data,
+      session: start("study", minutes, minutes, 0, now, action.partner),
+    };
   }
   if (!current || action.id !== current.id) return data;
 
   if (current.status === "running" && current.endsAt <= now) {
-    const message = Math.floor(
-      random() * focus.reminders[current.anger].length,
-    );
     const { endsAt, ...base } = current;
     return {
-      session: { ...base, status: "alert", message },
+      session: { ...base, status: "alert" },
       records: record(data, current, true),
     };
   }
@@ -131,7 +133,14 @@ export function transition(
   if (action.type === "rest" && current.kind !== "rest")
     return {
       ...data,
-      session: start("rest", focus.restMinutes, current.studyMinutes, 0, now),
+      session: start(
+        "rest",
+        focus.restMinutes,
+        current.studyMinutes,
+        0,
+        now,
+        current.partner ?? focus.defaultPartner,
+      ),
     };
   if (action.type === "extend" && current.kind !== "rest")
     return {
@@ -142,6 +151,7 @@ export function transition(
         current.studyMinutes,
         Math.min(focus.maxAnger, current.anger + 1),
         now,
+        current.partner ?? focus.defaultPartner,
       ),
     };
   if (action.type === "again" && current.kind === "rest")
@@ -153,6 +163,7 @@ export function transition(
         current.studyMinutes,
         0,
         now,
+        current.partner ?? focus.defaultPartner,
       ),
     };
   return data;
@@ -200,6 +211,8 @@ export function isFocusData(value: unknown): value is FocusData {
   if (
     !session ||
     typeof session.id !== "string" ||
+    (session.partner !== undefined &&
+      !["howler", "mandrake"].includes(session.partner)) ||
     !["study", "extension", "rest"].includes(session.kind) ||
     !finite(session.startedAt) ||
     !finite(session.durationMs) ||
@@ -212,12 +225,7 @@ export function isFocusData(value: unknown): value is FocusData {
     session.anger > focus.maxAnger
   )
     return false;
-  if (session.status === "alert")
-    return (
-      Number.isInteger(session.message) &&
-      session.message >= 0 &&
-      session.message < focus.reminders[session.anger].length
-    );
+  if (session.status === "alert") return true;
   if (session.status === "running") return finite(session.endsAt);
   return (
     session.status === "paused" &&

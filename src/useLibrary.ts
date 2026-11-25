@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import { starters, Book, read, save } from "./books";
 import { expandLegacyHighlights } from "./sentences";
 import { importBook } from "./import";
-import { sigilPaths } from "./config";
+import { sigilPaths, focus, type FocusPartner } from "./config";
 import site from "./site.json";
 import { translator } from "./i18n";
 const defaultPrefs = {
@@ -22,6 +22,8 @@ const defaultPrefs = {
   mode: "page",
   zhDefs: false,
   focusSound: true,
+  focusPartner: focus.defaultPartner as FocusPartner,
+  focusShake: true,
   focusVibration: true,
   fingerInk: false,
   leftHand: false,

@@ -7,15 +7,19 @@ import {
   type FocusAction,
   type FocusSession,
 } from "./focusTimer";
-import { playFocusAlert, unlockFocusAudio } from "./focusAudio";
-import { translator, type Translate } from "./i18n";
+import { unlockFocusAudio } from "./focusAudio";
+import { type Translate } from "./i18n";
 
-const english = translator("en");
-export function reminder(session: Extract<FocusSession, { status: "alert" }>) {
-  return english(
+export function reminder(
+  session: Extract<FocusSession, { status: "alert" }>,
+  t: Translate,
+) {
+  return t(
     session.kind === "rest"
       ? "focusRestFinished"
-      : focus.reminders[session.anger][session.message],
+      : (session.partner ?? focus.defaultPartner) === "howler"
+        ? focus.howlerLines[session.anger]
+        : focus.mandrakeLines[session.anger],
   );
 }
 
@@ -55,12 +59,7 @@ async function notify(title: string, body: string, id: string) {
   }
 }
 
-export function useFocusTimer(
-  sound: boolean,
-  vibration: boolean,
-  t: Translate,
-  preferencesReady: boolean,
-) {
+export function useFocusTimer(sound: boolean, t: Translate, lang: string) {
   const [data, setData] = useState(emptyFocus);
   const [now, setNow] = useState(Date.now);
   const [ready, setReady] = useState(false);
@@ -68,9 +67,8 @@ export function useFocusTimer(
   const [error, setError] = useState(false);
   const channel = useRef<BroadcastChannel | null>(null);
   const sequence = useRef(0);
-  const announced = useRef<string | undefined>(undefined);
-  const settings = useRef({ sound, vibration, t });
-  settings.current = { sound, vibration, t };
+  const settings = useRef({ sound, t });
+  settings.current = { sound, t };
 
   const sync = useCallback(async (action?: FocusAction) => {
     const revision = ++sequence.current;
@@ -82,7 +80,7 @@ export function useFocusTimer(
         if (document.hidden && session?.status === "alert")
           void notify(
             settings.current.t("focusTimer"),
-            reminder(session),
+            reminder(session, settings.current.t),
             session.id,
           );
       }
@@ -149,37 +147,16 @@ export function useFocusTimer(
     };
   }, [session, sync]);
 
-  useEffect(() => {
-    if (session?.status !== "alert" || !preferencesReady) return;
-    function present() {
-      if (
-        document.hidden ||
-        session?.status !== "alert" ||
-        announced.current === session.id
-      )
-        return;
-      announced.current = session.id;
-      if (settings.current.sound)
-        playFocusAlert(
-          session.anger,
-          session.kind === "rest",
-          () => settings.current.sound,
-        );
-      if (settings.current.vibration) {
-        try {
-          navigator.vibrate?.(session.kind === "rest" ? 100 : [160, 70, 220]);
-        } catch {}
-      }
-    }
-    present();
-    document.addEventListener("visibilitychange", present);
-    return () => document.removeEventListener("visibilitychange", present);
-  }, [session, preferencesReady]);
-
   async function act(action: FocusAction) {
     if (!ready || busy) return false;
     if (["start", "again", "extend", "resume", "rest"].includes(action.type)) {
-      if (settings.current.sound) unlockFocusAudio();
+      if (settings.current.sound)
+        unlockFocusAudio(
+          action.type === "start"
+            ? action.partner
+            : (session?.partner ?? focus.defaultPartner),
+          lang,
+        );
       if (action.type === "start") requestNotifications();
     }
     setBusy(true);

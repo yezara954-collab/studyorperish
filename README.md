@@ -225,3 +225,53 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 
 - `docs/assets/index-C0FFpF1x.js`
 - `docs/assets/index-DG7Capie.css`
+
+## Stage 3 修订版 · 计时伙伴与循环提醒
+
+### 仓库根目录与部署目录
+
+解压后，包含 `/README.md`、`/package.json`、`/src/` 和 `/docs/` 的这一层就是仓库根目录 `/`。部署时，用本包的 `/docs/` 完整替换仓库根目录下同名的 GitHub Pages 发布目录。以下文件路径从仓库根目录起算。
+
+### 计时伙伴
+
+- 进入阅读页的「学习计时」，先选吼叫信或曼德拉草，再选时长。上次选择会保存在设置中。旧版计时会话恢复时默认使用吼叫信。
+- 阅读页右侧显示所选伙伴、时间、暂停与结束。窄屏使用约 120px 的侧栏。侧栏可收起成时间标签。
+- 「预览提醒」播放一次所选伙伴的提醒。正式到点后约每 6 秒重演一次，直到作出选择。提醒中可手动点「播放提醒音」，为刷新后需要触摸才能重新开启声音的浏览器提供入口。
+- 设置里可以关闭屏幕抖动。系统开启减少动态效果时，屏幕抖动降至 1px。延时最高升到第 3 级。
+
+计时和停表使用截止时间戳。本地学习记录和旧版 JSON 备份继续可读。
+
+### 素材配置
+
+- `/src/config.ts` 中的 `focus.partners` 是伙伴素材路径，可分别替换计时和提醒用素材。默认使用 `/src/components/FocusCompanion.tsx` 中的占位 SVG。需要保留分层嘴部或哭泣动作时，可替换同组件的对应 SVG 图层。
+- `focus.sounds` 提供提示音、哭声和吼声回退的路径。留空播放 Web Audio 合成效果。吼叫信优先按界面语言用系统语音朗读。
+- `focus.animation` 提供循环间隔和抖动强度配置，动画用的视觉变量在 `/src/tokens.css`。中英文台词在 `/src/i18n.ts`。
+
+### 新增文件
+
+- `/docs/assets/index-BcK0i3oc.css`
+- `/docs/assets/index-DGPeKoVu.js`
+- `/src/components/FocusCompanion.tsx`
+- `/src/useFocusAlarm.ts`
+
+### 修改文件
+
+- `/README.md`
+- `/docs/index.html`
+- `/docs/sw.js`
+- `/src/components/FocusTimer.tsx`
+- `/src/config.ts`
+- `/src/focusAudio.ts`
+- `/src/focusTimer.ts`
+- `/src/i18n.ts`
+- `/src/main.tsx`
+- `/src/memory.ts`
+- `/src/style.css`
+- `/src/tokens.css`
+- `/src/useFocusTimer.ts`
+- `/src/useLibrary.ts`
+
+### 删除文件
+
+- `/docs/assets/index-D22RDiFd.js`
+- `/docs/assets/index-DDrlnnXj.css`

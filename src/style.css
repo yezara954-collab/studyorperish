@@ -767,36 +767,90 @@ nav, .readerbar {
   cursor: none;
 }
 
-/* The dock has its own row, above the reader and its ink canvas. */
-.focus-dock {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
+.focus-layout[data-focus-rail] {
+  --focus-active-rail: var(--focus-rail-width);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--focus-active-rail);
+  align-items: start;
   max-width: var(--max-width-mast);
-  padding: var(--focus-dock-padding);
-  margin: auto;
+  margin-inline: auto;
 }
-.focus-dock button {
-  line-height: var(--space-body);
-  padding: var(--space-body);
-  opacity: var(--focus-art-muted);
+.focus-layout[data-focus-rail="compact"] { --focus-active-rail: var(--focus-rail-tab); }
+.focus-content { min-width: 0; }
+@media (max-width: 999px) {
+  .focus-layout[data-focus-rail="expanded"] { --focus-active-rail: var(--focus-rail-narrow); }
 }
-.focus-dock button:is(:hover, :focus-visible) { opacity: 1; }
+.focus-rail {
+  position: sticky;
+  top: var(--focus-rail-top);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-nav-button);
+  margin: var(--focus-rail-top) var(--space-select) var(--space-body);
+  padding: var(--focus-rail-padding);
+  background: var(--color-header-background);
+  border: var(--border-article);
+  border-radius: var(--border-radius-primary);
+  text-align: center;
+  min-width: 0;
+}
+.focus-layout[data-focus-rail="compact"] .focus-rail { padding-inline: var(--space-body); }
+.focus-collapse { justify-self: end; }
+.focus-rail-actions { display: grid; gap: var(--space-select); max-width: var(--quill-full); }
+.focus-rail-actions button, .focus-tab {
+  padding: var(--space-select);
+  border: var(--border-readerbar-button);
+  border-radius: var(--border-radius-primary);
+}
+.focus-countdown, .focus-tab {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.focus-countdown { font-size: var(--focus-countdown-size); }
+.focus-rail-art {
+  width: min(var(--focus-rail-art), var(--quill-full));
+  aspect-ratio: 1;
+}
 .focus-art {
-  width: var(--focus-icon-size);
-  height: var(--focus-icon-size);
+  display: block;
+  width: var(--quill-full);
+  height: auto;
+  aspect-ratio: 1;
   overflow: visible;
+  object-fit: contain;
+}
+.focus-partners {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-nav);
+  min-width: 0;
+  border: none;
+  padding: var(--space-body);
+  margin: var(--space-body);
+}
+.focus-partners button {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-select);
+}
+.focus-partners .focus-art { width: min(var(--focus-card-art), var(--quill-full)); }
+.focus-partners button[aria-pressed="true"] {
+  background: var(--color-reading-highlight);
+  color: var(--color-reading-highlight-text);
 }
 .focus-leaf-fill { fill: var(--focus-leaf-color); }
 .focus-root-fill { fill: var(--focus-root-color); }
 .focus-pot-fill { fill: var(--focus-pot-color); }
+.focus-pot-rim { fill: var(--focus-envelope-hot); }
+.focus-pot-shadow { fill: var(--color-veil-background); }
 .focus-face, .focus-fold {
   fill: none;
   stroke: var(--focus-ink-color);
   stroke-width: var(--focus-art-stroke);
   stroke-linecap: round;
 }
-.focus-cry { fill: var(--focus-ink-color); }
+.focus-mouth { fill: var(--focus-mouth-color); }
 .focus-tears, .focus-smoke {
   fill: none;
   stroke-width: var(--focus-art-stroke);
@@ -808,37 +862,30 @@ nav, .readerbar {
 .focus-cry { opacity: var(--quill-hidden); }
 .focus-envelope { fill: var(--focus-envelope-cool); }
 .focus-seal { fill: var(--focus-seal-color); }
-.focus-leaves, .focus-mandrake, .focus-envelope { transform-origin: center bottom; }
-[data-focus-state="stir"] .focus-leaves {
-  animation: focus-stir var(--focus-stir-duration) infinite;
+.focus-leaves, .focus-mandrake, .focus-envelope, .focus-mandrake-body { transform-origin: center bottom; }
+.focus-mouth { transform-box: fill-box; transform-origin: center; }
+[data-focus-state="sleep"] .focus-mandrake-body,
+[data-focus-state="sleep"] .focus-envelope,
+[data-focus-state="stir"] .focus-envelope {
+  animation: focus-breathe var(--focus-idle-period) ease-in-out infinite;
 }
-[data-focus-state="hot"] .focus-mandrake {
-  animation: focus-shake var(--focus-shake-duration) ease-in-out infinite;
-}
-[data-focus-state="hot"] .focus-envelope,
-[data-focus-state="alert"] .focus-envelope {
+[data-focus-state="stir"] .focus-leaves { animation: focus-stir var(--focus-stir-duration) infinite; }
+[data-focus-state="hot"] .focus-mandrake { animation: focus-wobble var(--focus-shake-duration) ease-in-out infinite; }
+[data-focus-state="hot"] .focus-envelope {
   fill: var(--focus-envelope-hot);
-  animation: focus-shake var(--focus-shake-duration) ease-in-out infinite;
+  animation: focus-wobble var(--focus-shake-duration) ease-in-out infinite;
 }
 [data-focus-state="hot"] .focus-smoke {
-  opacity: var(--focus-art-muted);
   animation: focus-smoke var(--focus-smoke-duration) ease-out infinite;
 }
-[data-focus-final="true"] .focus-envelope {
-  animation: focus-shake var(--focus-final-shake) ease-in-out infinite;
-}
+[data-focus-final="true"] .focus-envelope { animation: focus-wobble var(--focus-final-shake) ease-in-out infinite; }
 [data-focus-paused="true"] * { animation-play-state: paused; }
-
 .focus-dialog {
   inset: var(--space-body);
   transform: none;
   margin: auto;
 }
 .focus-dialog::backdrop { background: var(--color-veil-background); }
-.focus-countdown {
-  font-size: var(--focus-countdown-size);
-  font-variant-numeric: tabular-nums;
-}
 .focus-dialog input[type="number"] {
   width: var(--quill-full);
   color: var(--color-select-color);
@@ -846,44 +893,85 @@ nav, .readerbar {
   border: var(--border-select);
   padding: var(--space-readerbar-button);
 }
-.focus-start { margin-top: var(--focus-dock-gap); }
-.focus-unfold { animation: focus-unfold var(--focus-unfold-duration) ease-out both; }
-.focus-unfold::backdrop { animation: focus-flash var(--focus-unfold-duration) ease-out both; }
-.focus-finished-art { display: flex; justify-content: space-between; }
-.focus-finished-art .focus-art { width: var(--focus-alert-icon-size); height: var(--focus-alert-icon-size); }
-[data-focus-state="alert"] .focus-mandrake { animation: focus-shake var(--focus-final-shake) ease-in-out 4; }
-[data-focus-state="alert"] .focus-tears,
-[data-focus-state="alert"] .focus-cry {
-  opacity: 1;
-  animation: focus-cry var(--focus-cry-duration) ease-out 2;
+.focus-alarm { width: var(--focus-alert-width); }
+.focus-alarm-scene {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-nav);
 }
+.focus-alarm-scene .focus-art { width: var(--focus-alert-art); }
+.focus-alarm-scene[data-focus-state="alert"] .focus-art {
+  animation: focus-arrive var(--focus-arrival-time) ease-out both;
+}
+.focus-alarm-scene h2 {
+  flex: 1 1 var(--focus-alert-art);
+  font-size: var(--focus-alert-type);
+  overflow-wrap: anywhere;
+}
+[data-focus-anger="1"] h2 { font-size: var(--focus-anger-one); }
+[data-focus-anger="2"] h2 { font-size: var(--focus-anger-two); }
+[data-focus-anger="3"] h2 { font-size: var(--focus-anger-three); }
+[data-focus-partner="howler"][data-focus-beat="true"] h2 {
+  animation: focus-jitter var(--focus-shake-period) linear var(--focus-mouth-beats);
+}
+.focus-alarm-scene[data-focus-state="alert"] .focus-envelope { fill: var(--focus-envelope-hot); }
+[data-focus-beat="true"] .focus-upper-lip {
+  animation: focus-upper-mouth var(--focus-mouth-period) ease-in-out var(--focus-mouth-beats);
+}
+[data-focus-beat="true"] .focus-lower-lip {
+  animation: focus-lower-mouth var(--focus-mouth-period) ease-in-out var(--focus-mouth-beats);
+}
+[data-focus-state="settling"] .focus-upper-lip {
+  animation: focus-close-mouth var(--focus-settle-time) ease-out both;
+}
+[data-focus-state="settling"] .focus-smoke { animation: focus-smoke var(--focus-settle-time) ease-out; }
+[data-focus-state="alert"] .focus-mandrake-body { transform: translateY(var(--focus-root-rise)); }
+[data-focus-state="alert"] .focus-sleep-face { opacity: var(--quill-hidden); }
+[data-focus-state="alert"] .focus-tears, [data-focus-state="alert"] .focus-cry { opacity: 1; }
+[data-focus-beat="true"] .focus-mandrake-body { animation: focus-sob var(--focus-whimper-period) ease-in-out infinite; }
+[data-focus-beat="true"] .focus-pot { animation: focus-wobble var(--focus-whimper-period) ease-in-out infinite; }
+[data-focus-beat="true"] .focus-tears { animation: focus-smoke var(--focus-whimper-period) ease-out infinite reverse; }
+[data-focus-beat="true"] .focus-cry.focus-mouth { animation: focus-cry-mouth var(--focus-whimper-period) ease-in-out infinite; }
+.focus-stage[data-focus-shaking="true"],
+.focus-alarm-scene[data-focus-shaking="true"] {
+  animation: focus-jitter var(--focus-shake-period) linear infinite;
+}
+@keyframes focus-breathe { 50% { transform: scale(var(--focus-breathe-scale)); } }
 @keyframes focus-stir {
   0%, 78%, 100% { transform: rotate(0); }
   83% { transform: rotate(var(--focus-stir-angle)); }
   91% { transform: rotate(calc(-1 * var(--focus-stir-angle))); }
 }
-@keyframes focus-shake {
-  0%, 100% { transform: rotate(0); }
+@keyframes focus-wobble {
   25% { transform: rotate(var(--focus-shake-angle)); }
   75% { transform: rotate(calc(-1 * var(--focus-shake-angle))); }
 }
 @keyframes focus-smoke {
-  from { opacity: var(--focus-art-muted); }
+  from { opacity: var(--focus-art-dim); }
+  35% { opacity: 1; }
   to { transform: translateY(var(--focus-smoke-rise)); opacity: var(--quill-hidden); }
 }
-@keyframes focus-cry {
-  50% { opacity: var(--focus-art-dim); }
+@keyframes focus-arrive { from { transform: scale(var(--focus-rest-scale)); } }
+@keyframes focus-upper-mouth { 55% { transform: translateY(var(--focus-lip-lift)); } }
+@keyframes focus-lower-mouth { 55% { transform: translateY(var(--focus-lip-drop)); } }
+@keyframes focus-close-mouth { from { transform: translateY(var(--focus-lip-lift)); } }
+@keyframes focus-sob {
+  0%, 100% { transform: translateY(var(--focus-root-rise)); }
+  45% { transform: translateY(calc(var(--focus-root-rise) * 1.23)); }
 }
-@keyframes focus-unfold {
-  from { transform: perspective(var(--width-dialog)) rotateX(var(--focus-unfold-angle)) scaleY(var(--focus-unfold-folded)); }
-  55% { transform: scaleY(var(--focus-unfold-half)); }
-  to { transform: none; }
-}
-@keyframes focus-flash {
-  0%, 100% { background: var(--color-veil-background); }
-  20% { background: var(--focus-envelope-hot); }
-  47% { background: var(--focus-envelope-cool); }
+@keyframes focus-cry-mouth { 50% { transform: scaleY(var(--focus-mouth-scale)); } }
+@keyframes focus-jitter {
+  25% { transform: translate(var(--focus-shake-distance), calc(var(--focus-shake-distance) * -.45)); }
+  75% { transform: translate(calc(var(--focus-shake-distance) * -.8), calc(var(--focus-shake-distance) * .5)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .focus-dialog, .focus-dialog::backdrop, .focus-art, .focus-art * { animation: none !important; }
+  .focus-frame { --focus-shake-distance: var(--focus-short-shake) !important; }
+  .focus-rail .focus-art, .focus-rail .focus-art *,
+  .focus-alarm-scene .focus-art, .focus-alarm-scene .focus-art * {
+    animation: none !important;
+  }
+  [data-focus-beat="true"] .focus-upper-lip { transform: translateY(var(--focus-lip-lift)); }
+  [data-focus-beat="true"] .focus-lower-lip { transform: translateY(var(--focus-lip-drop)); }
 }
