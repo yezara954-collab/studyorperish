@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="380" viewBox="0 0 300 380">
+  <title>Snape silhouette placeholder</title>
+  <path fill="#d0b486" opacity=".26" d="M37 351V141a113 113 0 0 1 226 0v210Z"/>
+  <path fill="#26242a" stroke="#aa8c66" stroke-width="3" d="M29 360c3-67 41-117 89-131v-24h64v24c48 14 86 64 89 131Z"/>
+  <path fill="#161418" d="M75 177c-6-65 14-115 74-117 60 2 84 49 77 117l-13 77-36-18h-54l-37 18Z"/>
+  <path fill="#d8bc95" d="M111 166c2-28 13-41 38-56 24 2 41 23 43 56l-9 34-34 26-32-26Z"/>
+  <path fill="none" stroke="#3b2d29" stroke-width="3" stroke-linecap="round" d="m122 170 16 4m25 0 15-4m-41 28 25-2"/>
+  <path fill="#362e37" d="m116 235 32 28 35-28 17 125H99Z"/>
+  <path fill="none" stroke="#756874" stroke-width="2" d="M149 264v96m14-77v4m0 16v4m0 16v4"/>
+</svg>
