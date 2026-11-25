@@ -1,9 +1,5 @@
-import type { MessageKey } from "./i18n";
 import { Plate, Flourish } from "./art";
 export const illustrations = { Cover: Plate, Banner: Flourish };
-export const companion = { languagePrompt: "languagePrompt" } satisfies {
-  languagePrompt: MessageKey;
-};
 export { default as sigilPaths } from "./sigil.json";
 export const iconPaths: Record<string, string> = {
   shelf: "M3 5h4v14H3zM10 4h3v15h-3zM15 6l3-1 4 13-3 1z",

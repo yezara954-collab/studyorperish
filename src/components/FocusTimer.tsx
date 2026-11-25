@@ -1,3 +1,4 @@
+import { FocusReaderContext } from "./FocusReaderContext";
 import React, { useEffect, useRef, useState } from "react";
 import { focus, type FocusPartner } from "../config";
 import type { Translate } from "../i18n";
@@ -271,6 +272,12 @@ export function FocusTimer({
 
   const [closingAlert, setClosingAlert] = useState<typeof alert>(null);
   const visibleAlert = closingAlert ?? alert;
+  const rail = Boolean(session);
+  const alertShown = Boolean(visibleAlert);
+  const readerFeedback = React.useMemo(
+    () => ({ rail, alarm: alertShown }),
+    [rail, alertShown],
+  );
 
   return (
     <div className="focus-frame" style={motion}>
@@ -282,7 +289,11 @@ export function FocusTimer({
             session ? (compact ? "compact" : "expanded") : undefined
           }
         >
-          <div className="focus-content">{children}</div>
+          <div className="focus-content">
+            <FocusReaderContext.Provider value={readerFeedback}>
+              {children}
+            </FocusReaderContext.Provider>
+          </div>
           {session && (
             <aside
               className="focus-rail"

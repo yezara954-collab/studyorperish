@@ -1,3 +1,8 @@
+import { roles } from "./companions";
+import { useCompanionRole, firstLine } from "./companions/useCompanion";
+import { CompanionSettings } from "./components/CompanionSettings";
+import { CompanionPortrait } from "./components/ReadingCompanion";
+import { SwitchConfirmation } from "./components/SwitchConfirmation";
 import { FocusTimer } from "./components/FocusTimer";
 import { Notebook } from "./components/Notebook";
 import React from "react";
@@ -7,7 +12,7 @@ import { Icon, Sigil } from "./components/Icons";
 import { Bookshelf } from "./components/Bookshelf";
 import { TrashBin } from "./components/TrashBin";
 import { useLibrary } from "./useLibrary";
-import { illustrations, companion, quill } from "./config";
+import { illustrations, quill } from "./config";
 import "./style.css";
 
 function App() {
@@ -31,6 +36,8 @@ function App() {
     notice,
     setNotice,
   } = library;
+  const activeRole = useCompanionRole(book?.id, prefs.companion, library.ready);
+  const speaker = activeRole ?? roles.draco;
   return (
     <>
       <FocusTimer
@@ -93,6 +100,9 @@ function App() {
             add={collectWord}
             onBack={() => setBook(null)}
             onTimer={() => setTimerOpened(true)}
+            companionRole={activeRole}
+            companionWords={bin}
+            companionBlocked={Boolean(modal) || timerOpened}
           />
         ) : (
           <main className="desk">
@@ -258,6 +268,11 @@ function App() {
                     {t("focusShake")}
                   </span>
                 </label>
+                <CompanionSettings
+                  settings={prefs.companion}
+                  t={t}
+                  change={(companion) => setPrefs({ ...prefs, companion })}
+                />
                 <button onClick={() => setModal("about")}>{t("about")}</button>
               </>
             ) : modal === "about" ? (
@@ -266,23 +281,25 @@ function App() {
                 <p>{t("brand")}</p>
               </>
             ) : (
-              <>
-                <h2>{t("confirmTitle")}</h2>
-                <p>{t(companion.languagePrompt)}</p>
-                <p>{t("confirmBody")}</p>
-                <button onClick={() => setModal("settings")}>
-                  {t("keepEnglish")}
-                </button>{" "}
-                <button
-                  className="primary"
-                  onClick={() => {
-                    setPrefs({ ...prefs, lang: "zh" });
-                    setModal("");
-                  }}
-                >
-                  {t("switchChinese")}
-                </button>
-              </>
+              <SwitchConfirmation
+                title={t("confirmTitle")}
+                prompt={firstLine(
+                  speaker,
+                  "chineseConfirm",
+                  t,
+                  prefs.companion.userName,
+                )}
+                speaker={t(speaker.displayName)}
+                portrait={<CompanionPortrait role={speaker} />}
+                detail={t("confirmBody")}
+                cancelLabel={t("keepEnglish")}
+                confirmLabel={t("switchChinese")}
+                cancel={() => setModal("settings")}
+                confirm={() => {
+                  setPrefs({ ...prefs, lang: "zh" });
+                  setModal("");
+                }}
+              />
             )}
           </dialog>
         </div>

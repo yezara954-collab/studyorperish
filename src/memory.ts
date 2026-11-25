@@ -133,6 +133,20 @@ export async function getReviewProgress() {
 }
 
 type BackupRows = Record<(typeof stores)[number], [string, unknown][]>;
+function validCompanion(value: unknown) {
+  if (value === undefined) return true;
+  if (!value || typeof value !== "object") return false;
+  const v = value as Partial<import("./companions/types").CompanionSettings>;
+  return (
+    typeof v.enabled === "boolean" &&
+    typeof v.focus === "boolean" &&
+    ["rotate", "fixed"].includes(v.mode ?? "") &&
+    ["draco", "harry", "ron", "hermione"].includes(v.fixed ?? "") &&
+    ["top", "bottom"].includes(v.position ?? "") &&
+    typeof v.userName === "string"
+  );
+}
+
 export async function exportBackupJSON() {
   const transaction = (await db).transaction([...stores]);
   const requests = stores.map((name) => {
@@ -274,6 +288,7 @@ function validBackupRecord(store: keyof BackupRows, key: string, record: any) {
   if (key === focusStateKey) return isFocusData(record);
   if (key === "prefs")
     return (
+      validCompanion(record.companion) &&
       [undefined, "howler", "mandrake"].includes(record.focusPartner) &&
       (record.focusShake === undefined ||
         typeof record.focusShake === "boolean") &&

@@ -34,6 +34,7 @@ type Gesture = {
   points: Sample[];
   time: number;
   painted: number;
+  drawing?: boolean;
   erased?: Erased;
 };
 type Options = {
@@ -50,6 +51,7 @@ type Options = {
   radius: number;
   whole: boolean;
   blocked: boolean;
+  onDrawing?: (active: boolean) => void;
   erase: (change: ReturnType<typeof strokeChanges>) => Promise<boolean>;
   deleteHighlight: (id: string) => void;
   turn: (direction: number) => void;
@@ -427,6 +429,7 @@ export function useQuill(options: Options) {
 
   function finish(cancel = false) {
     if (cancel && active.current?.erased?.size) repaint.current();
+    if (active.current?.drawing) options.onDrawing?.(false);
     active.current = null;
     const canvas = live.current;
     canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
@@ -451,7 +454,7 @@ export function useQuill(options: Options) {
         suppressClick.current = false;
         const touch = event.pointerType === "touch";
         if (!enabled && (!touch || !paged)) return;
-        const gesture = {
+        const gesture: Gesture = {
           id: event.pointerId,
           finger: touch && (!enabled || !fingerInk),
           x: event.clientX,
@@ -461,12 +464,14 @@ export function useQuill(options: Options) {
           time: event.timeStamp,
           painted: 0,
           erased: enabled && strokeTool === "eraser" ? new Map() : undefined,
-        } satisfies Gesture;
+        };
         active.current = gesture;
         if (!enabled) return; // Reading mode leaves vertical scrolling to the browser.
         event.preventDefault();
         event.currentTarget.setPointerCapture(event.pointerId);
         if (gesture.finger) return;
+        gesture.drawing = true;
+        options.onDrawing?.(true);
         bounds.current = event.currentTarget.getBoundingClientRect();
         sample(event.nativeEvent, gesture);
         featherAt(event.nativeEvent, 1);

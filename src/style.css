@@ -975,3 +975,176 @@ nav, .readerbar {
   [data-focus-beat="true"] .focus-upper-lip { transform: translateY(var(--focus-lip-lift)); }
   [data-focus-beat="true"] .focus-lower-lip { transform: translateY(var(--focus-lip-drop)); }
 }
+
+.companion-settings {
+  display: grid;
+  gap: var(--space-nav-button);
+  margin: var(--space-nav-button) var(--space-body);
+  padding: var(--space-nav-button);
+  border: var(--border-select);
+}
+.companion-settings label { display: block; }
+.companion-settings input[type="text"] {
+  max-width: var(--quill-full);
+  background: var(--color-select-background);
+  color: var(--color-select-color);
+  border: var(--border-select);
+  padding: var(--space-select);
+}
+.companion-zone { container-type: inline-size; }
+.companion-page {
+  position: relative;
+  overflow: clip;
+}
+.companion-page[data-companion="true"] { padding-inline-end: var(--companion-gutter); }
+.companion-page[data-companion="true"][data-companion-side="left"] {
+  padding-inline: var(--companion-gutter) var(--space-body);
+}
+.companion-layer {
+  position: absolute;
+  inset: var(--space-body);
+  pointer-events: none;
+}
+.companion-layer[data-hidden="true"] { visibility: hidden; }
+.companion-actor {
+  position: absolute;
+  width: var(--companion-actor-width);
+  left: calc(100% - var(--companion-gutter) / 2);
+  top: var(--companion-edge);
+  transform: translate(-50%, -50%) translate(var(--companion-drag-x, 0px), var(--companion-drag-y, 0px));
+  transition: left var(--companion-motion) ease-in-out, top var(--companion-motion) ease-in-out, transform var(--companion-motion) ease-out;
+  text-align: center;
+}
+[data-companion-side="left"] .companion-actor { left: calc(var(--companion-gutter) / 2); }
+[data-position="bottom"] .companion-actor { top: calc(100% - var(--companion-edge)); }
+.companion-actor[data-pose="arrive"], .companion-actor[data-pose="center"], .companion-actor[data-pose="quidditch"] {
+  left: var(--companion-center);
+}
+.companion-actor[data-pose="arrive"] { top: var(--companion-intro-height); }
+.companion-actor[data-pose="center"] { top: var(--companion-center); }
+.companion-actor[data-pose="quidditch"] { top: var(--companion-intro-height); }
+.companion-actor[data-dragging="true"] { transition: none; }
+.companion-actor[data-pose="arrive"] .companion-motion {
+  animation: companion-enter var(--companion-motion) ease-out both;
+}
+.companion-actor[data-pose="arrive"] .companion-bubble {
+  animation: companion-intro-line var(--companion-motion) step-end both;
+}
+.companion-actor[data-pose="reading"] .companion-figure {
+  animation: companion-breathe var(--companion-idle-time) ease-in-out infinite;
+}
+.companion-actor[data-pose="sleeping"] .companion-figure {
+  animation: companion-sleep var(--companion-idle-time) ease-in-out infinite;
+}
+.companion-actor[data-pose="center"] .companion-figure {
+  animation: companion-peek var(--companion-motion) ease-in-out;
+}
+.companion-actor[data-pose="quidditch"] .companion-figure {
+  animation: companion-sport var(--companion-sport-time) ease-in-out infinite;
+}
+.companion-layer[data-frozen="true"] * { animation-play-state: paused; }
+.companion-body {
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  display: inline-block;
+  padding: var(--space-body);
+  width: var(--quill-full);
+}
+.companion-body[data-draggable="true"] { touch-action: none; cursor: grab; }
+[data-dragging="true"] .companion-body { cursor: grabbing; }
+.companion-layer[data-protected="true"] .companion-body,
+.companion-layer[data-hidden="true"] .companion-body { pointer-events: none; }
+.companion-sketch, .companion-body img, .companion-portrait img {
+  display: block;
+  width: var(--quill-full);
+  aspect-ratio: 96 / 92;
+  object-fit: contain;
+  overflow: visible;
+}
+.companion-portrait { width: var(--companion-narrow-width); }
+.companion-figure { transform-origin: center bottom; }
+.companion-robe { fill: var(--color-header-background); }
+.companion-scarf { fill: var(--companion-green); }
+.companion-hair { fill: var(--companion-light-hair); }
+[data-role="harry"] .companion-hair { fill: var(--companion-black-hair); }
+[data-role="ron"] .companion-hair { fill: var(--companion-red-hair); }
+[data-role="hermione"] .companion-hair { fill: var(--companion-brown-hair); }
+[data-role]:not([data-role="draco"]) .companion-scarf { fill: var(--companion-red); }
+.companion-skin { fill: var(--companion-face-color); }
+.companion-book { fill: var(--color-select-background); }
+.companion-broom { fill: var(--companion-broom-color); stroke: var(--companion-broom-color); stroke-width: var(--focus-art-stroke); }
+.companion-face-line, .companion-sleep-mark { fill: none; stroke: var(--focus-ink-color); stroke-width: var(--focus-art-stroke); }
+.companion-sleep-mark { stroke: var(--color-reading-highlight); }
+.companion-ball { fill: var(--color-reading-highlight); }
+.companion-face-label { display: block; font-size: var(--font-size-bottom); }
+.companion-bubble {
+  position: absolute;
+  top: calc(100% + var(--space-select));
+  left: var(--companion-center);
+  transform: translateX(-50%);
+  width: var(--companion-speech-width);
+  border: var(--border-article);
+  border-radius: var(--border-radius-primary);
+  background: var(--color-header-background);
+  color: var(--color-nav-active-color);
+  padding: var(--space-select);
+  font-size: var(--font-size-bottom);
+  overflow-wrap: anywhere;
+}
+.companion-bubble p { margin: var(--space-body); }
+.companion-bubble p + p, .companion-bubble small { margin-top: var(--space-select); }
+[data-position="bottom"] .companion-actor:not([data-pose="center"], [data-pose="arrive"], [data-pose="quidditch"]) .companion-bubble {
+  top: auto;
+  bottom: calc(100% + var(--space-select));
+}
+.companion-actor:is([data-pose="center"], [data-pose="arrive"], [data-pose="quidditch"]) .companion-bubble {
+  width: var(--companion-speech-expanded);
+}
+@container (max-width: 650px) {
+  .companion-page[data-companion="true"] {
+    padding: var(--companion-narrow-dock) var(--space-body) var(--space-body);
+  }
+  .companion-page[data-companion="true"][data-companion-side="left"] { padding-inline: var(--space-body); }
+  .companion-page[data-companion="true"][data-position="bottom"] {
+    padding-block: var(--space-body) var(--companion-narrow-dock);
+  }
+  .companion-actor {
+    --companion-edge: calc(var(--companion-narrow-dock) / 2);
+    width: var(--companion-narrow-width);
+    left: calc(100% - var(--companion-narrow-width) / 2);
+  }
+  [data-companion-side="left"] .companion-actor:not([data-pose="center"], [data-pose="arrive"], [data-pose="quidditch"]) { left: calc(var(--companion-narrow-width) / 2); }
+  .companion-actor:not([data-pose="center"], [data-pose="arrive"], [data-pose="quidditch"]) .companion-bubble,
+  [data-position="bottom"] .companion-actor:not([data-pose="center"], [data-pose="arrive"], [data-pose="quidditch"]) .companion-bubble {
+    top: var(--space-select);
+    bottom: auto;
+    left: auto;
+    right: calc(100% + var(--space-select));
+    transform: none;
+    width: min(var(--companion-speech-width), calc(100cqw - var(--companion-narrow-width) - var(--space-nav)));
+  }
+  [data-companion-side="left"] .companion-actor:not([data-pose="center"], [data-pose="arrive"], [data-pose="quidditch"]) .companion-bubble {
+    right: auto;
+    left: calc(100% + var(--space-select));
+  }
+}
+@keyframes companion-enter {
+  from { transform: translate(var(--companion-fly-away), var(--companion-fly-entry)) rotate(calc(-1 * var(--companion-tilt))); }
+  to { transform: none; }
+}
+@keyframes companion-intro-line {
+  from { opacity: var(--quill-hidden); }
+  to { opacity: var(--companion-opacity-full); }
+}
+@keyframes companion-breathe { 50% { transform: scale(var(--companion-breath)); } }
+@keyframes companion-sleep { 0%, 100% { transform: scaleY(var(--companion-slump)); } 50% { transform: scaleY(var(--companion-slump-breath)); } }
+@keyframes companion-peek { 55% { transform: rotate(var(--companion-tilt)); } }
+@keyframes companion-sport {
+  25% { transform: translate(var(--companion-side-step), var(--companion-flight-lift)) rotate(var(--companion-tilt)); }
+  75% { transform: translate(calc(-1 * var(--companion-side-step)), var(--companion-flight-lift)) rotate(calc(-1 * var(--companion-tilt))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .companion-layer *, .companion-actor { animation: none !important; transition: none !important; }
+}

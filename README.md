@@ -275,3 +275,56 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 
 - `/docs/assets/index-D22RDiFd.js`
 - `/docs/assets/index-DDrlnnXj.css`
+
+## Stage 4 · 陪读角色
+
+### 仓库根目录与部署目录
+
+解压后，包含 `/README.md`、`/package.json`、`/src/` 和 `/docs/` 的这一层就是仓库根目录 `/`。部署时，用本包的 `/docs/` 完整替换仓库根目录下同名的 GitHub Pages 发布目录。以下路径从仓库根目录起算。
+
+### 使用与调整
+
+- 在设置中的「陪读角色」启用或关闭陪读，选择轮换或固定角色、右上或右下、专注模式和用户名。轮换每次进入阅读页时选下一位角色，顺序为 Draco、Harry、Ron、Hermione。
+- 打开阅读页后可点击空中的角色使其立即落座，或等待它自动落座。专注模式直接开始读书，只安排读书和睡觉。
+- 每个阶段默认 10 分钟。中心拜访与魁地奇各有独立的停留时间，动作结束后角色回到角落，阶段时钟继续走。用阅读页「预览状态」可立即触发状态。
+- 赫敏会从单词垃圾桶抽取题目。点击角色本体可揭晓答案，空词库时会提示先收藏词条。
+- `/src/companions/states.ts` 配置循环顺序、停留、过渡和台词时长。四份角色配置在 `/src/companions/`，各自的 `sprite`、`expressionSprites` 和 `animation` 可指向 `/public/assets/` 下的图片或动图。默认使用带表情标签的占位 SVG。角色台词通过配置中的键从 `/src/i18n.ts` 读取，移动端布局和视觉参数集中在 `/src/tokens.css`。
+- `/src/components/SwitchConfirmation.tsx` 提供可复用的切换确认内容，接收标题、提示、可选头像及确认和取消回调。
+
+### 新增文件
+
+- `/docs/assets/index-Btr5O6c6.js`
+- `/docs/assets/index-D5MI4ano.css`
+- `/src/companions/draco.ts`
+- `/src/companions/harry.ts`
+- `/src/companions/hermione.ts`
+- `/src/companions/index.ts`
+- `/src/companions/ron.ts`
+- `/src/companions/states.ts`
+- `/src/companions/types.ts`
+- `/src/companions/useCompanion.ts`
+- `/src/components/CompanionSettings.tsx`
+- `/src/components/FocusReaderContext.ts`
+- `/src/components/ReadingCompanion.tsx`
+- `/src/components/SwitchConfirmation.tsx`
+
+### 修改文件
+
+- `/README.md`
+- `/docs/index.html`
+- `/docs/sw.js`
+- `/src/components/FocusTimer.tsx`
+- `/src/config.ts`
+- `/src/i18n.ts`
+- `/src/main.tsx`
+- `/src/memory.ts`
+- `/src/reader.tsx`
+- `/src/style.css`
+- `/src/tokens.css`
+- `/src/useLibrary.ts`
+- `/src/useQuill.ts`
+
+### 删除文件
+
+- `/docs/assets/index-BcK0i3oc.css`
+- `/docs/assets/index-DGPeKoVu.js`

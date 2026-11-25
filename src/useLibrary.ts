@@ -1,3 +1,4 @@
+import { companionDefaults } from "./companions/useCompanion";
 import {
   collectWord as storeWord,
   gradeWord,
@@ -21,6 +22,7 @@ const defaultPrefs = {
   line: 1.75,
   mode: "page",
   zhDefs: false,
+  companion: companionDefaults,
   focusSound: true,
   focusPartner: focus.defaultPartner as FocusPartner,
   focusShake: true,
@@ -69,7 +71,12 @@ export function useLibrary() {
             setNotice(t("annotationSaveFailed")),
           );
         setReviewProgress(await getReviewProgress());
-        setPreferences({ ...defaultPrefs, ...(await read("state", "prefs")) });
+        const stored = await read("state", "prefs");
+        setPreferences({
+          ...defaultPrefs,
+          ...stored,
+          companion: { ...companionDefaults, ...stored?.companion },
+        });
         setReady(true);
       } catch {
         setNotice(t("storageUnavailable"));

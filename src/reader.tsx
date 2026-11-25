@@ -1,3 +1,7 @@
+import { ReadingCompanion } from "./components/ReadingCompanion";
+import { FocusReaderContext } from "./components/FocusReaderContext";
+import type { Role } from "./companions/types";
+import type { Word } from "./memory";
 import React from "react";
 import { useReader, type ReaderProps } from "./useReader";
 import { useQuill } from "./useQuill";
@@ -14,9 +18,14 @@ type Props = ReaderProps & {
   ) => Promise<boolean>;
   backLabel: string;
   onTimer: () => void;
+  companionRole?: Role;
+  companionWords: Word[];
+  companionBlocked: boolean;
 };
 export function Reader(props: Props) {
   const state = useReader(props);
+  const [drawing, setDrawing] = React.useState(false);
+  const { rail, alarm } = React.useContext(FocusReaderContext);
   const { book, prefs, t, onBack } = props;
   const {
     ch,
@@ -135,6 +144,7 @@ export function Reader(props: Props) {
     radius: eraserSize / 2,
     whole: prefs.eraserMode === "whole",
     blocked: busy,
+    onDrawing: setDrawing,
     erase: apply,
     deleteHighlight(id) {
       const before = modeItems.filter(
@@ -419,124 +429,140 @@ export function Reader(props: Props) {
           </select>
         </section>
       )}
-      <article>
-        <small>{book.title}</small>
-        <select
-          aria-label={t("chapter")}
-          value={ch}
-          onChange={(e) => go(+e.target.value)}
-        >
-          {book.chapters.map((c, i) => (
-            <option key={i} value={i}>
-              {i + 1}. {c.title}
-            </option>
-          ))}
-        </select>
-        <h1>{chapter.title}</h1>
-        <div
-          className="passage-layout"
-          data-writing={writing}
-          data-eraser={strokeTool === "eraser"}
-          style={
-            {
-              "--quill-cursor": `url("${cursorUrl || quill.image}") ${quill.cursorHotspot.join(" ")}, url("${quill.cursorFallback}") ${quill.cursorHotspot.join(" ")}`,
-              "--quill-tip-color": nib,
-              "--quill-tip-size": quill.width * 1.5 + "px",
-              "--eraser-size": eraserSize + "px",
-            } as React.CSSProperties
-          }
-        >
+      <ReadingCompanion
+        role={props.companionRole}
+        settings={prefs.companion}
+        words={props.companionWords}
+        drawing={drawing}
+        writing={writing}
+        blocked={Boolean(word) || props.companionBlocked}
+        alarm={alarm}
+        rail={rail}
+        t={t}
+      >
+        <article>
+          <small>{book.title}</small>
+          <select
+            aria-label={t("chapter")}
+            value={ch}
+            onChange={(e) => go(+e.target.value)}
+          >
+            {book.chapters.map((c, i) => (
+              <option key={i} value={i}>
+                {i + 1}. {c.title}
+              </option>
+            ))}
+          </select>
+          <h1>{chapter.title}</h1>
           <div
-            ref={box}
-            className="passage"
-            data-paged={!scroll}
+            className="passage-layout"
+            data-writing={writing}
+            data-eraser={strokeTool === "eraser"}
             style={
               {
-                "--reader-size": prefs.size + "px",
-                "--reader-line": prefs.line,
+                "--quill-cursor": `url("${cursorUrl || quill.image}") ${quill.cursorHotspot.join(" ")}, url("${quill.cursorFallback}") ${quill.cursorHotspot.join(" ")}`,
+                "--quill-tip-color": nib,
+                "--quill-tip-size": quill.width * 1.5 + "px",
+                "--eraser-size": eraserSize + "px",
               } as React.CSSProperties
             }
-            {...(!writing ? tools.handlers : {})}
-            onContextMenu={(event) => {
-              if (writing) event.preventDefault();
-            }}
-            onScroll={() => {
-              const b = box.current;
-              if (!scroll || !b) return;
-              const rect = b.getBoundingClientRect();
-              const top = rect.top + 2;
-              const first = [
-                ...b.querySelectorAll<HTMLElement>("[data-sentence-id]"),
-              ].find((span) => span.getBoundingClientRect().bottom > top);
-              const caret = document.caretRangeFromPoint?.(
-                rect.left + 5,
-                rect.top + 8,
-              );
-              const word =
-                caret?.startContainer.parentElement?.closest<HTMLElement>(
-                  "[data-at]",
+          >
+            <div
+              ref={box}
+              className="passage"
+              data-paged={!scroll}
+              style={
+                {
+                  "--reader-size": prefs.size + "px",
+                  "--reader-line": prefs.line,
+                } as React.CSSProperties
+              }
+              {...(!writing ? tools.handlers : {})}
+              onContextMenu={(event) => {
+                if (writing) event.preventDefault();
+              }}
+              onScroll={() => {
+                const b = box.current;
+                if (!scroll || !b) return;
+                const rect = b.getBoundingClientRect();
+                const top = rect.top + 2;
+                const first = [
+                  ...b.querySelectorAll<HTMLElement>("[data-sentence-id]"),
+                ].find((span) => span.getBoundingClientRect().bottom > top);
+                const caret = document.caretRangeFromPoint?.(
+                  rect.left + 5,
+                  rect.top + 8,
                 );
-              const next =
-                word && b.contains(word)
-                  ? Number(word.dataset.at)
-                  : Number(first?.dataset.start);
-              if (Number.isFinite(next) && next !== state.offset)
-                persist(ch, next);
-            }}
-          >
-            <div className="quill-text">{passage}</div>
+                const word =
+                  caret?.startContainer.parentElement?.closest<HTMLElement>(
+                    "[data-at]",
+                  );
+                const next =
+                  word && b.contains(word)
+                    ? Number(word.dataset.at)
+                    : Number(first?.dataset.start);
+                if (Number.isFinite(next) && next !== state.offset)
+                  persist(ch, next);
+              }}
+            >
+              <div className="quill-text">{passage}</div>
+            </div>
+            <canvas
+              className="quill-canvas"
+              aria-hidden="true"
+              ref={tools.saved}
+            />
+            <canvas
+              className="quill-canvas"
+              aria-hidden="true"
+              ref={tools.live}
+              {...(writing ? tools.handlers : {})}
+            />
+            <div
+              className="quill-sprite"
+              aria-hidden="true"
+              ref={tools.sprite}
+              style={
+                {
+                  "--quill-size": quill.spriteSize + "px",
+                  "--quill-hotspot-x": quill.spriteHotspot[0] + "px",
+                  "--quill-hotspot-y": quill.spriteHotspot[1] + "px",
+                  "--quill-fade": quill.fadeMs + "ms",
+                } as React.CSSProperties
+              }
+            >
+              <img alt="" draggable={false} src={quill.image} />
+            </div>
+            <div className="eraser-ring" aria-hidden="true" ref={tools.ring} />
           </div>
-          <canvas
-            className="quill-canvas"
-            aria-hidden="true"
-            ref={tools.saved}
-          />
-          <canvas
-            className="quill-canvas"
-            aria-hidden="true"
-            ref={tools.live}
-            {...(writing ? tools.handlers : {})}
-          />
-          <div
-            className="quill-sprite"
-            aria-hidden="true"
-            ref={tools.sprite}
-            style={
-              {
-                "--quill-size": quill.spriteSize + "px",
-                "--quill-hotspot-x": quill.spriteHotspot[0] + "px",
-                "--quill-hotspot-y": quill.spriteHotspot[1] + "px",
-                "--quill-fade": quill.fadeMs + "ms",
-              } as React.CSSProperties
-            }
-          >
-            <img alt="" draggable={false} src={quill.image} />
-          </div>
-          <div className="eraser-ring" aria-hidden="true" ref={tools.ring} />
-        </div>
-        {strokes.some(
-          (stroke) => stroke.kind === "quill" && stroke.fontSize !== prefs.size,
-        ) && <small role="status">{t("inkMayShift")}</small>}
-        <footer>
-          <button disabled={!ch && (scroll || !page)} onClick={() => turn(-1)}>
-            {t("previous")}
-          </button>
-          <small>
-            {scroll
-              ? t("chapter") + " " + (ch + 1)
-              : t("page") + " " + (page + 1) + " / " + pages.length}
-          </small>
-          <button
-            disabled={
-              ch === book.chapters.length - 1 &&
-              (scroll || page === pages.length - 1)
-            }
-            onClick={() => turn(1)}
-          >
-            {t("next")}
-          </button>
-        </footer>
-      </article>
+          {strokes.some(
+            (stroke) =>
+              stroke.kind === "quill" && stroke.fontSize !== prefs.size,
+          ) && <small role="status">{t("inkMayShift")}</small>}
+          <footer>
+            <button
+              disabled={!ch && (scroll || !page)}
+              onClick={() => turn(-1)}
+            >
+              {t("previous")}
+            </button>
+            <small>
+              {scroll
+                ? t("chapter") + " " + (ch + 1)
+                : t("page") + " " + (page + 1) + " / " + pages.length}
+            </small>
+            <button
+              disabled={
+                ch === book.chapters.length - 1 &&
+                (scroll || page === pages.length - 1)
+              }
+              onClick={() => turn(1)}
+            >
+              {t("next")}
+            </button>
+          </footer>
+        </article>
+      </ReadingCompanion>
       {word && <WordCard {...state} t={t} prefs={prefs} />}
       {error && (
         <p role="alert" className="notice">

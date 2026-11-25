@@ -332,3 +332,34 @@
   --focus-breathe-scale: 1.025;
   --focus-art-dim: .25;
 }
+
+:root {
+  --companion-gutter: 157px;
+  --companion-narrow-dock: 118px;
+  --companion-actor-width: 108px;
+  --companion-narrow-width: 88px;
+  --companion-speech-width: 140px;
+  --companion-speech-expanded: min(195px, 60vw);
+  --companion-edge: 72px;
+  --companion-center: 50%;
+  --companion-intro-height: 28%;
+  --companion-flight-lift: -22px;
+  --companion-fly-away: -56vw;
+  --companion-fly-entry: -16vh;
+  --companion-side-step: 69px;
+  --companion-idle-time: 3.2s;
+  --companion-sport-time: 1.65s;
+  --companion-breath: 1.045;
+  --companion-slump: .73;
+  --companion-slump-breath: .8;
+  --companion-tilt: 13deg;
+  --companion-face-color: var(--focus-root-color);
+  --companion-light-hair: #dbc189;
+  --companion-black-hair: #2d2c27;
+  --companion-red-hair: #b85735;
+  --companion-brown-hair: #7c5036;
+  --companion-green: #496953;
+  --companion-red: #9b4d41;
+  --companion-broom-color: #825b3d;
+  --companion-opacity-full: 1;
+}
