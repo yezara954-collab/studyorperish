@@ -47,10 +47,18 @@ export async function writeAnnotations(
   updates: Annotation[],
   deletions: string[] = [],
 ) {
-  const transaction = (await db).transaction("annotations", "readwrite");
-  const store = transaction.objectStore("annotations");
-  for (const id of deletions) store.delete(id);
-  for (const item of updates) store.put(item, item.id);
+  const transaction = (await db).transaction(
+    ["strokes", "highlights"],
+    "readwrite",
+  );
+  const strokes = transaction.objectStore("strokes");
+  const highlights = transaction.objectStore("highlights");
+  for (const id of deletions) {
+    strokes.delete(id);
+    highlights.delete(id);
+  }
+  for (const item of updates)
+    (item.kind === "highlight" ? highlights : strokes).put(item, item.id);
   await committed(transaction);
 }
 
@@ -132,7 +140,7 @@ export async function exportBackupJSON() {
   });
   await committed(transaction);
   return JSON.stringify({
-    version: 1,
+    version: 2,
     exportedAt: Date.now(),
     records: Object.fromEntries(
       requests.map(({ name, keys, values }) => [
@@ -146,8 +154,18 @@ export async function exportBackupJSON() {
 // Import merges by ID after validation. Call before mounting the UI or reload after import.
 export async function importBackupJSON(json: string) {
   const data = JSON.parse(json);
-  if (data?.version !== 1 || !data.records)
+  if (![1, 2].includes(data?.version) || !data.records)
     throw new Error("Unsupported backup");
+  if (data.version === 1) {
+    if (!Array.isArray(data.records.annotations))
+      throw new Error("Invalid backup");
+    data.records.highlights = data.records.annotations.filter(
+      (row: any) => row?.[1]?.kind === "highlight",
+    );
+    data.records.strokes = data.records.annotations.filter(
+      (row: any) => row?.[1]?.kind !== "highlight",
+    );
+  }
   const rows = data.records as BackupRows;
   for (const name of stores) {
     if (
@@ -206,8 +224,9 @@ function validBackupRecord(store: keyof BackupRows, key: string, record: any) {
           Number.isFinite(record.review.interval) &&
           record.review.interval > 0))
     );
-  if (store === "annotations") {
+  if (store === "strokes" || store === "highlights") {
     if (
+      (store === "highlights") !== (record.kind === "highlight") ||
       record.id !== key ||
       !strings(record.bookId) ||
       ![record.chapter, record.start, record.createdAt].every(nonnegative)
@@ -262,7 +281,9 @@ function validBackupRecord(store: keyof BackupRows, key: string, record: any) {
       (record.fingerInk === undefined ||
         typeof record.fingerInk === "boolean") &&
       (record.leftHand === undefined || typeof record.leftHand === "boolean") &&
-      [undefined, "brown", "black", "blue", "red"].includes(record.inkColor)
+      [undefined, "brown", "black", "blue", "red"].includes(record.inkColor) &&
+      [undefined, "small", "medium", "large"].includes(record.eraserSize) &&
+      [undefined, "partial", "whole"].includes(record.eraserMode)
     );
   return nonnegative(record.ch) && nonnegative(record.offset);
 }

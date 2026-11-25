@@ -147,3 +147,42 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 - `docs/assets/index-BvL_CU2I.css`
 - `src/components/MarginInk.tsx`
 - `src/useReadingTools.ts`
+
+## Stage 2 · 分模式批注与橡皮擦
+
+手动部署时，用本包中的 `docs/` 完整替换现有 Pages 仓库的 `docs/`。
+
+### 阅读、书写和高光
+
+- 「阅读」保留系统文字选择和单击查词。选择「羽毛笔」后，透明画布接管正文输入，屏蔽系统选区、长按和缩放事件。手指默认滑动或翻页，开启「允许手指书写」后可用手指画写。
+- 羽毛笔默认进入「手写批注」。横线、波浪线和圈词都作为墨迹保存。选择「高光批注」后，划过的每个句子会连续着色并自动入本。点击已高光的句子可确认移除，也会移除对应的笔记本记录。
+- 手写和高光分别支持撤销、重做。手写模式下，一次连续擦除或清除本页手写算一次操作。撤销和重做历史按章节及模式保存在当前阅读会话中。
+- 橡皮擦默认局部擦除。可切换整笔擦除和小、中、大三档，大小与擦除方式会记住。局部擦除保留各段笔迹的原文坐标。
+- 手写与高光分别存入 IndexedDB 的 `strokes` 和 `highlights`。旧批注会自动迁移。JSON 导出使用版本 2，导入兼容版本 1 和 2。
+
+### 相对上一版的新增文件
+
+- `docs/assets/index-C0FFpF1x.js`
+- `docs/assets/index-DG7Capie.css`
+- `src/inkEraser.ts`
+- `src/useAnnotationHistory.ts`
+
+### 修改文件
+
+- `README.md`
+- `docs/index.html`
+- `docs/sw.js`
+- `src/books.ts`
+- `src/config.ts`
+- `src/i18n.ts`
+- `src/memory.ts`
+- `src/quillGeometry.ts`
+- `src/reader.tsx`
+- `src/style.css`
+- `src/useLibrary.ts`
+- `src/useQuill.ts`
+
+### 删除文件
+
+- `docs/assets/index-OcoB1nCc.css`
+- `docs/assets/index-o8KtJ6WZ.js`

@@ -18,13 +18,34 @@ export const starters: Book[] = samples.map(
     ],
   }),
 );
-export const stores = ["books", "state", "bin", "annotations"] as const;
+export const stores = [
+  "books",
+  "state",
+  "bin",
+  "strokes",
+  "highlights",
+] as const;
 export const db = new Promise<IDBDatabase>((resolve, reject) => {
-  const r = indexedDB.open("vesper-archive", 2);
+  const r = indexedDB.open("vesper-archive", 3);
   r.onupgradeneeded = () => {
     for (const name of stores) {
       if (!r.result.objectStoreNames.contains(name))
         r.result.createObjectStore(name);
+    }
+    if (r.result.objectStoreNames.contains("annotations")) {
+      const transaction = r.transaction!;
+      const request = transaction.objectStore("annotations").openCursor();
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (cursor) {
+          const target =
+            cursor.value.kind === "highlight" ? "highlights" : "strokes";
+          transaction.objectStore(target).put(cursor.value, cursor.key);
+          cursor.continue();
+        } else {
+          r.result.deleteObjectStore("annotations");
+        }
+      };
     }
   };
   r.onsuccess = () => {

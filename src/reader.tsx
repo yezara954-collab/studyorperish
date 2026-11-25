@@ -1,7 +1,8 @@
 import React from "react";
 import { useReader, type ReaderProps } from "./useReader";
 import { useQuill } from "./useQuill";
-import { quill } from "./config";
+import { useAnnotationHistory } from "./useAnnotationHistory";
+import { eraserSizes, quill } from "./config";
 import { sentencesOf } from "./sentences";
 import type { Annotation, Highlight, Ink, QuillStroke } from "./memory";
 import { WordCard } from "./components/WordCard";
@@ -10,7 +11,7 @@ type Props = ReaderProps & {
   changeAnnotations: (
     updates: Annotation[],
     deletions?: string[],
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   backLabel: string;
 };
 export function Reader(props: Props) {
@@ -35,6 +36,48 @@ export function Reader(props: Props) {
     persist,
   } = state;
   const [writing, setWriting] = React.useState(false);
+  const [mode, setMode] = React.useState<"ink" | "highlight">("ink");
+  const [erasing, setErasing] = React.useState(false);
+  const strokeTool = mode === "ink" && erasing ? "eraser" : mode;
+  const eraserSize =
+    eraserSizes[prefs.eraserSize as keyof typeof eraserSizes] ??
+    eraserSizes.medium;
+  const { history, busy, apply } = useAnnotationHistory(
+    ch + ":" + mode,
+    props.changeAnnotations,
+  );
+  const nib =
+    mode === "highlight"
+      ? "var(--color-reading-highlight)"
+      : `var(--quill-ink-${prefs.inkColor})`;
+  const [cursorUrl, setCursorUrl] = React.useState("");
+  React.useEffect(() => {
+    if (!writing) return;
+    const image = new Image();
+    const shade =
+      mode === "highlight"
+        ? "--color-reading-highlight"
+        : "--quill-ink-" + prefs.inkColor;
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(image, 0, 0);
+      ctx.fillStyle = getComputedStyle(document.documentElement)
+        .getPropertyValue(shade)
+        .trim();
+      ctx.beginPath();
+      ctx.arc(...quill.cursorHotspot, quill.width * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+      setCursorUrl(canvas.toDataURL());
+    };
+    image.src = quill.cursorFallback;
+    return () => {
+      image.onload = null;
+    };
+  }, [writing, mode, prefs.inkColor]);
   const [flash, setFlash] = React.useState<string | undefined>(
     props.initial?.sentenceId,
   );
@@ -65,7 +108,10 @@ export function Reader(props: Props) {
       ),
     [current],
   );
-  const latest = current.reduce<Annotation | undefined>(
+  const modeItems = current.filter(
+    (item) => (item.kind === "highlight") === (mode === "highlight"),
+  );
+  const latest = modeItems.reduce<Annotation | undefined>(
     (best, item) => (!best || item.createdAt >= best.createdAt ? item : best),
     undefined,
   );
@@ -84,6 +130,18 @@ export function Reader(props: Props) {
     fingerInk: prefs.fingerInk,
     leftHand: prefs.leftHand,
     color: prefs.inkColor,
+    strokeTool,
+    radius: eraserSize / 2,
+    whole: prefs.eraserMode === "whole",
+    blocked: busy,
+    erase: apply,
+    deleteHighlight(id) {
+      const before = modeItems.filter(
+        (item) => item.kind === "highlight" && item.sentenceId === id,
+      );
+      if (before.length && window.confirm(t("removeNotebookHighlight")))
+        void apply({ before, after: [] });
+    },
     commit(ids, points) {
       const anchor = { bookId: book.id, chapter: ch, createdAt: Date.now() };
       const strokeId = crypto.randomUUID();
@@ -107,34 +165,45 @@ export function Reader(props: Props) {
             quote: sentence.text,
             note: "",
           }));
-        if (entries.length) void props.changeAnnotations(entries);
+        if (entries.length) void apply({ before: [], after: entries });
       } else if (points.length) {
-        void props.changeAnnotations([
-          {
-            ...anchor,
-            kind: "quill",
-            id: strokeId,
-            start: points[0].at,
-            points,
-            color: prefs.inkColor,
-            fontSize: prefs.size,
-          },
-        ]);
+        void apply({
+          before: [],
+          after: [
+            {
+              ...anchor,
+              kind: "quill",
+              id: strokeId,
+              start: points[0].at,
+              points,
+              color: prefs.inkColor,
+              fontSize: prefs.size,
+            },
+          ],
+        });
       }
     },
   });
   function undo() {
+    const recent = history.undo.at(-1);
+    if (recent) {
+      void apply(recent, "undo");
+      return;
+    }
     if (!latest) return;
-    const ids =
+    const group =
       latest.kind === "highlight" && latest.strokeId
-        ? current
-            .filter(
-              (item) =>
-                item.kind === "highlight" && item.strokeId === latest.strokeId,
-            )
-            .map((item) => item.id)
-        : [latest.id];
-    void props.changeAnnotations([], ids);
+        ? modeItems.filter(
+            (item) =>
+              item.kind === "highlight" && item.strokeId === latest.strokeId,
+          )
+        : [latest];
+    void apply({ before: [], after: group }, "undo");
+  }
+  function clearInk() {
+    const entries = tools.pageInk();
+    if (entries.before.length && window.confirm(t("clearPageInkConfirm")))
+      void apply(entries);
   }
 
   const passage: React.ReactNode[] = [];
@@ -170,20 +239,17 @@ export function Reader(props: Props) {
                 tabIndex={0}
                 key={match.index}
                 data-at={match.index}
-                onClick={() => open(match)}
+                onClick={(event) => {
+                  clearTimeout(timer.current);
+                  if (event.detail > 1 || window.getSelection()?.toString())
+                    return;
+                  timer.current = setTimeout(() => {
+                    if (!window.getSelection()?.toString()) open(match);
+                  }, 260);
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") open(match);
                 }}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  open(match);
-                }}
-                onPointerDown={() => {
-                  timer.current = setTimeout(() => open(match), 500);
-                }}
-                onPointerMove={() => clearTimeout(timer.current)}
-                onPointerUp={() => clearTimeout(timer.current)}
-                onPointerCancel={() => clearTimeout(timer.current)}
               >
                 {match[0]}
               </span>
@@ -217,10 +283,108 @@ export function Reader(props: Props) {
         >
           {t("quillTool")}
         </button>
-        <button disabled={!latest} onClick={undo}>
-          {t("undoStroke")}
-        </button>
       </div>
+      {writing && (
+        <div className="memory-tools" role="group" aria-label={t("quillTool")}>
+          <button
+            disabled={busy}
+            aria-pressed={mode === "ink"}
+            onClick={() => setMode("ink")}
+          >
+            {t("handwritingMode")}
+          </button>
+          <button
+            disabled={busy}
+            aria-pressed={mode === "highlight"}
+            onClick={() => {
+              setMode("highlight");
+              setErasing(false);
+            }}
+          >
+            {t("highlightMode")}
+          </button>
+          {mode === "ink" && (
+            <>
+              <label>
+                {t("inkColor")}{" "}
+                <select
+                  disabled={busy}
+                  value={prefs.inkColor}
+                  onClick={() => setErasing(false)}
+                  onChange={(event) => {
+                    setErasing(false);
+                    change("inkColor", event.target.value);
+                  }}
+                >
+                  {quill.colors.map((color) => (
+                    <option value={color} key={color}>
+                      {t(color)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                disabled={busy}
+                aria-pressed={erasing}
+                onClick={() => setErasing(!erasing)}
+              >
+                {t("eraser")}
+              </button>
+              {erasing && (
+                <>
+                  <label>
+                    {t("eraseMethod")}{" "}
+                    <select
+                      disabled={busy}
+                      value={prefs.eraserMode}
+                      onChange={(event) =>
+                        change("eraserMode", event.target.value)
+                      }
+                    >
+                      <option value="partial">{t("erasePartial")}</option>
+                      <option value="whole">{t("eraseWhole")}</option>
+                    </select>
+                  </label>
+                  <label>
+                    {t("eraserSize")}{" "}
+                    <select
+                      disabled={busy}
+                      value={prefs.eraserSize}
+                      onChange={(event) =>
+                        change("eraserSize", event.target.value)
+                      }
+                    >
+                      {(["small", "medium", "large"] as const).map((size) => (
+                        <option value={size} key={size}>
+                          {t(size)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              )}
+              <button disabled={busy || !strokes.length} onClick={clearInk}>
+                {t("clearPageInk")}
+              </button>
+            </>
+          )}
+          <button
+            disabled={busy || (!latest && !history.undo.length)}
+            onClick={undo}
+          >
+            {t("undoStroke")}
+          </button>
+          <button
+            disabled={busy || !history.redo.length}
+            onClick={() => {
+              const recent = history.redo.at(-1);
+              if (recent) void apply(recent, "redo");
+            }}
+          >
+            {t("redoStroke")}
+          </button>
+        </div>
+      )}
       {format && (
         <section className="options">
           <label>
@@ -267,7 +431,19 @@ export function Reader(props: Props) {
           ))}
         </select>
         <h1>{chapter.title}</h1>
-        <div className="passage-layout" data-writing={writing}>
+        <div
+          className="passage-layout"
+          data-writing={writing}
+          data-eraser={strokeTool === "eraser"}
+          style={
+            {
+              "--quill-cursor": `url("${cursorUrl || quill.image}") ${quill.cursorHotspot.join(" ")}, url("${quill.cursorFallback}") ${quill.cursorHotspot.join(" ")}`,
+              "--quill-tip-color": nib,
+              "--quill-tip-size": quill.width * 1.5 + "px",
+              "--eraser-size": eraserSize + "px",
+            } as React.CSSProperties
+          }
+        >
           <div
             ref={box}
             className="passage"
@@ -276,10 +452,9 @@ export function Reader(props: Props) {
               {
                 "--reader-size": prefs.size + "px",
                 "--reader-line": prefs.line,
-                "--quill-cursor": `url("${quill.image}") ${quill.cursorHotspot.join(" ")}, url("${quill.cursorFallback}") ${quill.cursorHotspot.join(" ")}`,
               } as React.CSSProperties
             }
-            {...tools.handlers}
+            {...(!writing ? tools.handlers : {})}
             onContextMenu={(event) => {
               if (writing) event.preventDefault();
             }}
@@ -318,14 +493,12 @@ export function Reader(props: Props) {
             className="quill-canvas"
             aria-hidden="true"
             ref={tools.live}
+            {...(writing ? tools.handlers : {})}
           />
-          <img
+          <div
             className="quill-sprite"
             aria-hidden="true"
-            alt=""
-            draggable={false}
             ref={tools.sprite}
-            src={quill.image}
             style={
               {
                 "--quill-size": quill.spriteSize + "px",
@@ -334,7 +507,10 @@ export function Reader(props: Props) {
                 "--quill-fade": quill.fadeMs + "ms",
               } as React.CSSProperties
             }
-          />
+          >
+            <img alt="" draggable={false} src={quill.image} />
+          </div>
+          <div className="eraser-ring" aria-hidden="true" ref={tools.ring} />
         </div>
         {strokes.some(
           (stroke) => stroke.kind === "quill" && stroke.fontSize !== prefs.size,

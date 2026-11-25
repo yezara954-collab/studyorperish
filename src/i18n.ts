@@ -1,5 +1,26 @@
 import site from "./site.json";
 export const messages = {
+  handwritingMode: ["Handwriting", "手写批注"],
+  highlightMode: ["Highlighting", "高光批注"],
+  eraser: ["Eraser", "橡皮擦"],
+  eraseMethod: ["Erase mode", "擦除方式"],
+  erasePartial: ["Partial erase", "局部擦除"],
+  eraseWhole: ["Whole stroke", "整笔擦除"],
+  eraserSize: ["Eraser size", "橡皮大小"],
+  small: ["Small", "小"],
+  medium: ["Medium", "中"],
+  large: ["Large", "大"],
+  clearPageInk: ["Clear page handwriting", "清除本页全部手写"],
+  clearPageInkConfirm: [
+    "Clear all handwriting on this page?",
+    "清除本页全部手写？",
+  ],
+  removeNotebookHighlight: [
+    "Also remove this highlight from Wow Notebook?",
+    "同时从哇赛赛笔记本移除？",
+  ],
+  redoStroke: ["Redo", "重做"],
+
   quillTool: ["Quill", "羽毛笔"],
   undoStroke: ["Undo", "撤销"],
   fingerInk: ["Allow finger writing", "允许手指书写"],

@@ -17,45 +17,6 @@ export function visibleLines(content: HTMLElement, bounds: DOMRect): Line[] {
   );
 }
 
-export function classifySweep(points: Sample[], lines: Line[], em: number) {
-  if (points.length < 3) return [];
-  const dx = points.at(-1)!.x - points[0].x;
-  const ys = points.map((point) => point.y);
-  if (Math.abs(dx) < em * 1.2 || Math.max(...ys) - Math.min(...ys) > em * 0.7)
-    return [];
-
-  let length = 0,
-    passing = 0;
-  const hits = new Map<string, number>();
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1],
-      b = points[i];
-    const distance = Math.hypot(b.x - a.x, b.y - a.y);
-    length += distance;
-    const samples = Math.ceil(distance / 4);
-    for (let j = 0; j < samples; j++) {
-      const part = (j + 0.5) / samples;
-      const x = a.x + (b.x - a.x) * part,
-        y = a.y + (b.y - a.y) * part;
-      const hit = lines.find(
-        ({ rect }) =>
-          x >= rect.left &&
-          x <= rect.right &&
-          y >= rect.top &&
-          y <= rect.bottom + em * 0.27,
-      );
-      if (!hit) continue;
-      const weight = distance / samples;
-      passing += weight;
-      hits.set(hit.id, (hits.get(hit.id) ?? 0) + weight);
-    }
-  }
-  if (Math.abs(dx) < length * 0.86 || passing < length * 0.63) return [];
-  return [...hits]
-    .filter(([, distance]) => distance >= em * 0.55)
-    .map(([id]) => id);
-}
-
 export function glyphLayout(content: HTMLElement) {
   const sections = [
     ...content.querySelectorAll<HTMLElement>("[data-sentence-id]"),

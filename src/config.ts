@@ -27,3 +27,5 @@ export const quill = {
   width: 2.25,
   colors: ["brown", "black", "blue", "red"],
 } as const;
+
+export const eraserSizes = { small: 16, medium: 28, large: 48 } as const;
