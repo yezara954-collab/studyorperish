@@ -1,3 +1,4 @@
+import { Notebook } from "./components/Notebook";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { Reader } from "./reader";
@@ -40,6 +41,7 @@ function App() {
             {[
               ["shelf", "shelf", t("bookshelf")],
               ["bin", "bin", t("trashBin")],
+              ["notebook", "notebook", t("notebook")],
             ].map(([v, i, s]) => (
               <button
                 className={view === v ? "active" : ""}
@@ -51,7 +53,10 @@ function App() {
                 {v === "bin" && bin.length > 0 && " · " + bin.length}
               </button>
             ))}
-            <button aria-label={t("settings")} onClick={() => setModal("settings")}>
+            <button
+              aria-label={t("settings")}
+              onClick={() => setModal("settings")}
+            >
               <Icon name="settings" />
             </button>
           </nav>
@@ -61,6 +66,10 @@ function App() {
         <Reader
           key={book.id}
           book={book}
+          backLabel={t(view === "notebook" ? "notebook" : "bookshelf")}
+          annotations={library.annotations}
+          saveAnnotation={library.saveAnnotation}
+          deleteAnnotation={library.deleteAnnotation}
           t={t}
           initial={pos}
           prefs={prefs}
@@ -75,17 +84,27 @@ function App() {
               <div className="eyebrow">
                 <i /> {t("privateReadingRoom")}
               </div>
-              <h1>{view === "bin" ? t("wordTrashBin") : t("theBookshelf")}</h1>
+              <h1>
+                {view === "bin"
+                  ? t("wordTrashBin")
+                  : view === "notebook"
+                    ? t("notebook")
+                    : t("theBookshelf")}
+              </h1>
               <p>
                 {view === "bin"
                   ? t("wordsGatheredFromYourReading")
-                  : t("yourPersonalCollectionOfEnchantedVolumes")}
+                  : view === "notebook"
+                    ? t("notebookSubtitle")
+                    : t("yourPersonalCollectionOfEnchantedVolumes")}
               </p>
             </div>
             <illustrations.Banner />
           </section>
           {view === "shelf" ? (
             <Bookshelf {...library} />
+          ) : view === "notebook" ? (
+            <Notebook {...library} />
           ) : (
             <TrashBin {...library} />
           )}

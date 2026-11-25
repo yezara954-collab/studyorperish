@@ -1,3 +1,13 @@
+import {
+  collectWord as storeWord,
+  gradeWord,
+  getReviewProgress,
+  removeHighlight,
+  type Annotation,
+  type Highlight,
+  type Word,
+  type Grade,
+} from "./memory";
 import { useState, useEffect } from "react";
 import { starters, Book, read, save } from "./books";
 import { importBook } from "./import";
@@ -13,7 +23,13 @@ const defaultPrefs = {
 };
 export function useLibrary() {
   const [books, setBooks] = useState<Book[]>(starters),
-    [bin, setBin] = useState<any[]>([]),
+    [bin, setBin] = useState<Word[]>([]),
+    [annotations, setAnnotations] = useState<Annotation[]>([]),
+    [reviewProgress, setReviewProgress] = useState({
+      totalReviews: 0,
+      reviewedWords: 0,
+      milestones: 0,
+    }),
     [prefs, setPreferences] = useState(defaultPrefs),
     [view, setView] = useState("shelf"),
     [book, setBook] = useState<Book | null>(null),
@@ -31,6 +47,8 @@ export function useLibrary() {
         const imported = await read("books");
         setBooks([...starters, ...imported]);
         setBin(await read("bin"));
+        setAnnotations(await read("annotations"));
+        setReviewProgress(await getReviewProgress());
         setPreferences({ ...defaultPrefs, ...(await read("state", "prefs")) });
         setReady(true);
       } catch {
@@ -68,11 +86,16 @@ export function useLibrary() {
   }, [zh]);
   function setPrefs(p: any) {
     setPreferences(p);
-    save("state", "prefs", p).catch(() => setNotice(t("settingsCouldNotBeSaved")));
+    save("state", "prefs", p).catch(() =>
+      setNotice(t("settingsCouldNotBeSaved")),
+    );
   }
-  async function open(b: Book) {
+  async function open(
+    b: Book,
+    target?: { ch: number; offset: number; highlight?: boolean },
+  ) {
     try {
-      setPosition(await read("state", b.id));
+      setPosition(target ?? (await read("state", b.id)));
       setBook(b);
     } catch {
       setNotice(t("unableToOpenThisBook"));
@@ -94,10 +117,48 @@ export function useLibrary() {
       setBusy(false);
     }
   }
-  async function collectWord(word: { w: string }) {
+  async function collectWord(word: Word) {
     if (!book) return;
-    await save("bin", word.w, { ...word, source: book.title });
+    await storeWord({ ...word, source: book.title });
     setBin(await read("bin"));
+  }
+  async function saveAnnotation(annotation: Annotation) {
+    try {
+      await save("annotations", annotation.id, annotation);
+      setAnnotations((values) => [
+        ...values.filter((value) => value.id !== annotation.id),
+        annotation,
+      ]);
+    } catch {
+      setNotice(t("annotationSaveFailed"));
+    }
+  }
+  async function deleteAnnotation(id: string) {
+    try {
+      await removeHighlight(id);
+      setAnnotations((values) => values.filter((value) => value.id !== id));
+    } catch {
+      setNotice(t("annotationSaveFailed"));
+    }
+  }
+  function jumpToHighlight(highlight: Highlight) {
+    const target = books.find((value) => value.id === highlight.bookId);
+    if (target?.chapters[highlight.chapter]) {
+      void open(target, {
+        ch: highlight.chapter,
+        offset: highlight.start,
+        highlight: true,
+      });
+    } else setNotice(t("unableToOpenThisBook"));
+  }
+  async function reviewWord(key: string, grade: Grade) {
+    try {
+      await gradeWord(key, grade);
+      setBin(await read("bin"));
+      setReviewProgress(await getReviewProgress());
+    } catch {
+      setNotice(t("reviewSaveFailed"));
+    }
   }
   function nav(v: string) {
     setBook(null);
@@ -127,6 +188,12 @@ export function useLibrary() {
     nav,
     ordered,
     collectWord,
+    annotations,
+    saveAnnotation,
+    deleteAnnotation,
+    jumpToHighlight,
+    reviewWord,
+    reviewProgress,
     setBook,
     setModal,
     setNotice,

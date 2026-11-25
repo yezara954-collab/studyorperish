@@ -609,3 +609,97 @@ blockquote {
     transition: none !important;
   }
 }
+
+nav, .readerbar {
+  flex-wrap: wrap;
+}
+.memory-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-nav-button);
+  margin-block: var(--space-nav-button);
+}
+.memory-tools button {
+  padding: var(--space-readerbar-button);
+  border: var(--border-readerbar-button);
+  border-radius: var(--border-radius-primary);
+}
+.memory-tools button[aria-pressed="true"] {
+  background: var(--color-reading-highlight);
+  color: var(--color-reading-highlight-text);
+}
+.passage-layout {
+  display: flex;
+  gap: var(--space-nav-button);
+  flex: var(--flex-passage);
+  min-height: var(--space-body);
+}
+.passage[data-tool="read"][data-paged="true"] {
+  touch-action: pan-y pinch-zoom;
+}
+.passage[data-tool="highlight"] {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.passage[data-tool="highlight"] [data-at] {
+  cursor: crosshair;
+}
+.passage .reading-highlight, .passage .reading-highlight:hover {
+  color: var(--color-reading-highlight-text);
+  background: var(--color-reading-highlight);
+}
+.margin-ink {
+  flex: none;
+  width: var(--width-handwriting);
+  border-inline-start: var(--border-handwriting);
+  fill: none;
+  stroke: var(--color-handwriting);
+  stroke-width: var(--stroke-handwriting);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.margin-ink[data-enabled="true"] {
+  background: var(--color-handwriting-paper);
+  touch-action: none;
+  cursor: crosshair;
+}
+.memory-stack {
+  display: grid;
+  gap: var(--space-nav);
+  margin: var(--space-memory-section);
+}
+.memory-card {
+  display: grid;
+  gap: var(--space-nav-button);
+  padding: var(--space-article);
+  background: var(--color-header-background);
+  border: var(--border-article);
+  border-radius: var(--border-radius-primary);
+  overflow-wrap: anywhere;
+}
+.memory-card :is(h3, p, blockquote) {
+  margin: var(--space-body);
+}
+.memory-field {
+  display: grid;
+  gap: var(--space-select);
+}
+.memory-card textarea {
+  min-height: var(--rows-personal-note);
+  resize: vertical;
+  font: inherit;
+  padding: var(--space-readerbar-button);
+  background: var(--color-select-background);
+  color: var(--color-select-color);
+  border: var(--border-select);
+  border-radius: var(--border-radius-primary);
+}
+.notebook-quote {
+  text-align: start;
+  padding: var(--space-body);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: var(--space-tl);
+}

@@ -46,7 +46,9 @@ export function useReader({
   add,
   onBack,
 }: ReaderProps) {
-  const [ch, setChapter] = useState(initial?.ch || 0),
+  const [ch, setChapter] = useState(
+      book.chapters[initial?.ch] ? (initial.ch as number) : 0,
+    ),
     [offset, setOffset] = useState(initial?.offset || 0),
     [word, setWord] = useState<any>(null),
     [format, setFormat] = useState(false),
@@ -88,12 +90,21 @@ export function useReader({
     const b = box.current;
     if (!b) return;
     b.scrollTop = 0;
-    if (scroll) {
+    if (scroll || initial?.highlight) {
       const els = [...b.querySelectorAll<HTMLElement>("[data-at]")];
       const el = els.findLast((x) => Number(x.dataset.at) <= anchor.current);
       if (el) b.scrollTop = el.offsetTop - 12;
     }
   }, [ch, scroll, prefs.size, prefs.line, scroll ? -1 : page]);
+  useEffect(() => {
+    if (initial?.highlight) {
+      save("state", book.id, { ch: initial.ch, offset: initial.offset }).catch(
+        () => setError(t("progressCouldNotBeSaved")),
+      );
+    }
+    return () => clearTimeout(timer.current);
+  }, []);
+
   function persist(c: number, o: number) {
     setOffset(o);
     save("state", book.id, { ch: c, offset: o }).catch(() =>
@@ -151,6 +162,7 @@ export function useReader({
   }
   return {
     ch,
+    offset,
     page,
     pages,
     scroll,

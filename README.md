@@ -48,3 +48,53 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 
 - `docs/assets/index-CC7KYG1s.css`
 - `docs/assets/index-DeYpRRbP.js`
+
+## Stage 2 · 笔记与记忆
+
+### 部署
+
+已有站点，把本包里的 `docs/` 完整替换到仓库原来的 `docs/`。在原域名和路径打开新版，可继续读取此前浏览器保存的书籍、阅读进度、设置和单词。源码整理见本包 `src/`。
+
+### 使用
+
+- 阅读模式下，按页阅读时可手指横滑或点翻页按钮。羽毛笔高光模式下，在正文用手指或触控笔划字，可切换按单词或整句。切换回阅读模式可再次滑动翻页。
+- 自由手写模式下，在右侧页边写字。笔迹按书、章节和正文字符位置锚定，以归一化坐标保存为矢量路径。工具栏可撤销当前页边最后一笔。
+- 哇赛赛笔记本自动收录高光，可按书筛选。点原文可回到对应位置，也可编辑个人批注或删除高光。
+- 在单词垃圾桶翻开到期卡片并评分。忘了在 10 分钟后到期，模糊在 1 天后到期，记得从 1 天起逐步延长，上限 365 天。垃圾桶显示每个词的累计复习次数。
+
+### 本地数据接口
+
+`src/memory.ts` 提供 `getReviewProgress()`，返回 `totalReviews`（已完成的评分次数）、`reviewedWords`（至少复习过一次的不同单词数）和 `milestones`（按每 100 次有效评分计算的累计里程碑）。这是 Stage 5 的计数接口。
+
+同文件的 `exportBackupJSON()` 与 `importBackupJSON(json)` 提供版本化 JSON 备份接口。导出包含导入书籍、阅读进度和设置、单词和复习记录、文字高光与矢量笔迹。导入先校验数据，再在一次事务中按 ID 合并，相同 ID 以备份值为准。后续接入界面时，在应用挂载前调用导入，或在导入完成后重新加载应用。
+
+### 相对 Stage 1 的新增文件
+
+- `docs/assets/index-B4GhuIB_.js`
+- `docs/assets/index-BvL_CU2I.css`
+- `src/components/MarginInk.tsx`
+- `src/components/Notebook.tsx`
+- `src/components/Review.tsx`
+- `src/memory.ts`
+- `src/useReadingTools.ts`
+
+### 修改文件
+
+- `README.md`
+- `docs/index.html`
+- `docs/sw.js`
+- `src/books.ts`
+- `src/components/TrashBin.tsx`
+- `src/config.ts`
+- `src/i18n.ts`
+- `src/main.tsx`
+- `src/reader.tsx`
+- `src/style.css`
+- `src/tokens.css`
+- `src/useLibrary.ts`
+- `src/useReader.ts`
+
+### 删除文件
+
+- `docs/assets/index-CIZ3Jiw2.js`
+- `docs/assets/index-DkFd6vbL.css`

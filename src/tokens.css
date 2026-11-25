@@ -268,3 +268,16 @@
   --height-article-2: calc(100dvh - 178px);
   --font-size-bottom: 12px;
 }
+
+:root {
+  --color-reading-highlight: #e5bd61;
+  --color-reading-highlight-text: #2c251e;
+  --color-handwriting: #594529;
+  --color-handwriting-rule: #a38e6770;
+  --color-handwriting-paper: #d8c39a44;
+  --border-handwriting: 1px dashed var(--color-handwriting-rule);
+  --width-handwriting: clamp(76px, 20vw, 190px);
+  --stroke-handwriting: 2.25px;
+  --space-memory-section: 16px 0;
+  --rows-personal-note: 4.5em;
+}
