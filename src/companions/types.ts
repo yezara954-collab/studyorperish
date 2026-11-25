@@ -40,11 +40,23 @@ export type Role = {
   animation: Partial<Record<LineState, string>>;
   expressionSprites: Partial<Record<Expression, string>>;
 };
+export const companionPositions = [
+  "top",
+  "bottom",
+  "topLeft",
+  "bottomLeft",
+] as const;
+export const companionScales = ["small", "medium", "large"] as const;
+export type CompanionPosition = (typeof companionPositions)[number];
+export type CompanionScale = (typeof companionScales)[number];
+
 export type CompanionSettings = {
   enabled: boolean;
   mode: "rotate" | "fixed";
   fixed: CompanionId;
-  position: "top" | "bottom";
+  position: CompanionPosition;
+  scale: CompanionScale;
+  hiddenUntil: number;
   focus: boolean;
   userName: string;
   preview: boolean;

@@ -1,5 +1,9 @@
 import { roles } from "./companions";
-import { useCompanionRole, firstLine } from "./companions/useCompanion";
+import {
+  useCompanionRole,
+  useCompanionHidden,
+  firstLine,
+} from "./companions/useCompanion";
 import {
   CompanionDeveloper,
   CompanionSettings,
@@ -45,6 +49,7 @@ function App() {
   } = library;
   const activeRole = useCompanionRole(book?.id, prefs.companion, library.ready);
   const speaker = roles.draco;
+  const companionHidden = useCompanionHidden(prefs.companion.hiddenUntil);
   return (
     <>
       <FocusTimer
@@ -109,6 +114,7 @@ function App() {
             onTimer={() => setTimerOpened(true)}
             companionRole={activeRole}
             companionWords={bin}
+            companionHidden={companionHidden}
             companionBlocked={Boolean(modal) || timerOpened}
             onCompanionPreviewApplied={() => setCompanionPreview(undefined)}
             companionPreview={
@@ -287,6 +293,7 @@ function App() {
                   </span>
                 </label>
                 <CompanionSettings
+                  hidden={companionHidden}
                   settings={prefs.companion}
                   t={t}
                   change={(companion) => setPrefs({ ...prefs, companion })}
@@ -294,7 +301,7 @@ function App() {
                 <CompanionDeveloper
                   settings={prefs.companion}
                   t={t}
-                  available={Boolean(activeRole)}
+                  available={Boolean(activeRole) && !companionHidden}
                   change={(companion) => setPrefs({ ...prefs, companion })}
                   preview={(cue) => {
                     if (!activeRole) return;
@@ -333,7 +340,6 @@ function App() {
                     face="surprised"
                     size="hero"
                     t={t}
-                    fadeLine
                     dialogue={<p lang="en">{prompt}</p>}
                   />
                 )}

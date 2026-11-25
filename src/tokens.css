@@ -334,16 +334,7 @@
 }
 
 :root {
-  --companion-gutter: 157px;
-  --companion-narrow-dock: 118px;
-  --companion-speech-width: 140px;
-  --companion-speech-expanded: min(195px, 60vw);
-  --companion-edge: 72px;
-  --companion-center: 50%;
-  --companion-intro-height: 28%;
   --companion-flight-lift: -22px;
-  --companion-fly-away: -56vw;
-  --companion-fly-entry: -16vh;
   --companion-side-step: 69px;
   --companion-idle-time: 3.2s;
   --companion-sport-time: 1.65s;
@@ -364,14 +355,12 @@
 
 
 :root {
-  --center-bubble-max: 520px;
-  --center-tail: 8px;
   --center-dialogue-line: 1.34;
-  --center-book-height-frac: .57;
-  --center-book-landscape-frac: .88;
-  --center-landscape-width: 620px;
-  --center-landscape-line: min(48vw, 360px);
-  --companion-side-tail: 18px;
+  --center-book-height-frac: .88;
+  --corner-max-page-width: 92cqw;
+  --comic-bubble-radius: 22px;
+  --comic-hero-min-height: clamp(66px, 7vw, 98px);
+  --center-tail-border-overlap: 2px;
   --center-toolbar-padding: 5px 6px 8px;
   --center-confirm-padding: clamp(16px, 3vw, 28px);
 }

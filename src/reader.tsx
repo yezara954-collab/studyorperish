@@ -1,6 +1,10 @@
 import { ReadingCompanion } from "./components/ReadingCompanion";
 import { FocusReaderContext } from "./components/FocusReaderContext";
-import type { CompanionPreview, Role } from "./companions/types";
+import type {
+  CompanionPosition,
+  CompanionPreview,
+  Role,
+} from "./companions/types";
 import type { Word } from "./memory";
 import React from "react";
 import { useReader, type ReaderProps } from "./useReader";
@@ -21,13 +25,14 @@ type Props = ReaderProps & {
   companionRole?: Role;
   companionWords: Word[];
   companionBlocked: boolean;
+  companionHidden: boolean;
   companionPreview?: CompanionPreview;
   onCompanionPreviewApplied?: () => void;
 };
 export function Reader(props: Props) {
   const state = useReader(props);
   const [drawing, setDrawing] = React.useState(false);
-  const { rail, alarm } = React.useContext(FocusReaderContext);
+  const { alarm } = React.useContext(FocusReaderContext);
   const { book, prefs, t, onBack } = props;
   const {
     ch,
@@ -446,7 +451,10 @@ export function Reader(props: Props) {
         writing={writing}
         blocked={Boolean(word) || props.companionBlocked}
         alarm={alarm}
-        rail={rail}
+        temporarilyHidden={props.companionHidden}
+        onPositionChange={(position: CompanionPosition) =>
+          change("companion", { ...prefs.companion, position })
+        }
         t={t}
       >
         <article>

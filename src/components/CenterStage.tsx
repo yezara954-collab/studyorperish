@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useRef } from "react";
+import { useSpeechPlacement } from "../companions/useSpeechPlacement";
 import type { Translate } from "../i18n";
 import {
   companionStates,
@@ -10,18 +11,21 @@ import type { Expression, LineState, Role } from "../companions/types";
 
 export const centerStageVariables = {
   "--center-hero-art": stageSizes.hero.art,
-  "--center-hero-scene": stageSizes.hero.scene,
   "--center-center-art": stageSizes.center.art,
-  "--center-center-scene": stageSizes.center.scene,
-  "--companion-actor-width": stageSizes.corner.art,
-  "--companion-narrow-width": stageSizes.corner.compact,
-  "--center-corner-scene": stageSizes.corner.scene,
-  "--center-corner-compact-bubble": stageSizes.corner.compactBubble,
-  "--center-dialogue-font": stageLayout.dialogueSize,
+  "--corner-landscape-art": stageSizes.corner.art,
+  "--corner-portrait-art": stageSizes.corner.portrait,
+  "--corner-avatar-art": stageSizes.corner.avatar,
   "--center-confirm-width": stageLayout.confirmWidth,
+  "--center-confirm-art": stageLayout.confirmArt,
+  "--center-confirm-offset": stageLayout.confirmOffset,
   "--center-confirm-action": stageLayout.confirmActionSize,
   "--center-quiet-scale": stageLayout.quietScale,
   "--center-quiet-opacity": stageLayout.quietOpacity,
+  "--center-near-opacity": stageLayout.nearOpacity,
+  "--center-safe-margin": stageLayout.safePadding + "px",
+  "--center-tail-half": stageLayout.tailHalf + "px",
+  "--center-tail-length": stageLayout.bubbleGap + "px",
+  "--corner-height-limit": stageLayout.cornerHeightLimit,
   "--center-arc-x": stageLayout.arcStartX,
   "--center-arc-y": stageLayout.arcStartY,
   "--center-arc-crest": stageLayout.arcCrestY,
@@ -98,7 +102,8 @@ export function CenterStage({
   showDialogue = true,
   preview = false,
   quiet = false,
-  fadeLine = false,
+  moving = false,
+  layoutKey = "",
   bodyProps,
 }: {
   role: Role;
@@ -111,18 +116,23 @@ export function CenterStage({
   showDialogue?: boolean;
   preview?: boolean;
   quiet?: boolean;
-  fadeLine?: boolean;
+  moving?: boolean;
+  layoutKey?: string;
   bodyProps?: React.ComponentPropsWithoutRef<"button">;
 }) {
-  const [timedVisible, setTimedVisible] = useState(true);
-  useEffect(() => {
-    if (!fadeLine) return;
-    const timeout = window.setTimeout(
-      () => setTimedVisible(false),
-      companionStates.speechMs,
-    );
-    return () => window.clearTimeout(timeout);
-  }, [fadeLine]);
+  const stage = useRef<HTMLDivElement>(null);
+  const character = useRef<HTMLDivElement>(null);
+  const bubble = useRef<HTMLDivElement>(null);
+  useSpeechPlacement(
+    stage,
+    character,
+    bubble,
+    size,
+    pose,
+    showDialogue && Boolean(dialogue),
+    moving,
+    layoutKey,
+  );
   const image =
     role.animation[cue] ?? role.expressionSprites[face] ?? role.sprite;
   const art = image ? (
@@ -132,25 +142,34 @@ export function CenterStage({
   );
   return (
     <div
+      ref={stage}
       className="center-stage companion-motion"
+      data-pose={pose}
+      style={
+        {
+          "--center-dialogue-font": stageSizes[size].text,
+        } as React.CSSProperties
+      }
       data-role={role.id}
       data-size={size}
       data-quiet={quiet}
     >
       <div className="center-stage-character">
-        {bodyProps ? (
-          <button
-            {...bodyProps}
-            type="button"
-            className="companion-body center-stage-art"
-          >
-            {art}
-          </button>
-        ) : (
-          <div className="center-stage-art" aria-hidden="true">
-            {art}
-          </div>
-        )}
+        <div ref={character} className="center-stage-anchor">
+          {bodyProps ? (
+            <button
+              {...bodyProps}
+              type="button"
+              className="companion-body center-stage-art"
+            >
+              {art}
+            </button>
+          ) : (
+            <div className="center-stage-art" aria-hidden="true">
+              {art}
+            </div>
+          )}
+        </div>
         {preview && (
           <span className="companion-face-label">
             {t(("companionFace_" + face) as Parameters<Translate>[0])}
@@ -159,9 +178,10 @@ export function CenterStage({
       </div>
       {dialogue && (
         <div
+          ref={bubble}
           className="companion-bubble"
-          data-visible={showDialogue && timedVisible}
-          aria-hidden={!(showDialogue && timedVisible)}
+          data-visible={showDialogue}
+          aria-hidden={!showDialogue}
           aria-live="polite"
         >
           {dialogue}

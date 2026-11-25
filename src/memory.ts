@@ -143,7 +143,10 @@ function validCompanion(value: unknown) {
     (v.preview === undefined || typeof v.preview === "boolean") &&
     ["rotate", "fixed"].includes(v.mode ?? "") &&
     ["draco", "harry", "ron", "hermione"].includes(v.fixed ?? "") &&
-    ["top", "bottom"].includes(v.position ?? "") &&
+    ["top", "bottom", "topLeft", "bottomLeft"].includes(v.position ?? "") &&
+    (v.scale === undefined || ["small", "medium", "large"].includes(v.scale)) &&
+    (v.hiddenUntil === undefined ||
+      (Number.isFinite(v.hiddenUntil) && v.hiddenUntil >= 0)) &&
     typeof v.userName === "string"
   );
 }

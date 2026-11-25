@@ -3,6 +3,7 @@ import { companionIds, roles } from "../companions";
 import { companionStates } from "../companions/states";
 import {
   lineStates,
+  companionScales,
   type CompanionSettings as Settings,
   type LineState,
 } from "../companions/types";
@@ -11,10 +12,12 @@ import type { Translate } from "../i18n";
 export function CompanionSettings({
   settings,
   change,
+  hidden,
   t,
 }: {
   settings: Settings;
   change: (value: Settings) => void;
+  hidden: boolean;
   t: Translate;
 }) {
   return (
@@ -78,8 +81,41 @@ export function CompanionSettings({
         >
           <option value="top">{t("companionTop")}</option>
           <option value="bottom">{t("companionBottom")}</option>
+          <option value="topLeft">{t("companionTopLeft")}</option>
+          <option value="bottomLeft">{t("companionBottomLeft")}</option>
         </select>
       </label>
+      <label>
+        {t("companionScale")}{" "}
+        <select
+          aria-label={t("companionScale")}
+          value={settings.scale}
+          onChange={(event) =>
+            change({
+              ...settings,
+              scale: event.target.value as Settings["scale"],
+            })
+          }
+        >
+          {companionScales.map((scale) => (
+            <option key={scale} value={scale}>
+              {t(scale)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        disabled={!settings.enabled}
+        onClick={() =>
+          change({
+            ...settings,
+            hiddenUntil: hidden ? 0 : Date.now() + companionStates.hideMs,
+          })
+        }
+      >
+        {t(hidden ? "companionShow" : "companionHide")}
+      </button>
       <label>
         <input
           type="checkbox"

@@ -9,6 +9,8 @@ export const companionDefaults: CompanionSettings = {
   mode: "rotate",
   fixed: "draco",
   position: "top",
+  scale: "medium",
+  hiddenUntil: 0,
   focus: false,
   userName: "",
   preview: false,
@@ -113,12 +115,13 @@ export function useCompanion(
   t: Translate,
   blocked: boolean,
   writing: boolean,
+  hidden: boolean,
 ) {
   const [visit, setVisit] = useState(() => ({
-    phase: (settings.focus ? "reading" : "arrive") as Phase,
-    pose: (settings.focus ? "reading" : "arrive") as Pose,
-    cue: (settings.focus ? "reading" : "arrive") as LineState,
-    lineKey: role.lines[settings.focus ? "reading" : "arrive"][0],
+    phase: (settings.focus || hidden ? "reading" : "arrive") as Phase,
+    pose: (settings.focus || hidden ? "reading" : "arrive") as Pose,
+    cue: (settings.focus || hidden ? "reading" : "arrive") as LineState,
+    lineKey: role.lines[settings.focus || hidden ? "reading" : "arrive"][0],
     revision: 0,
     speech: 0,
   }));
@@ -152,6 +155,10 @@ export function useCompanion(
       lineKey: pickLine(role, cue, t, settings.userName, v.lineKey),
       speech: v.speech + 1,
     }));
+  }
+  function replay() {
+    setBubble(true);
+    setVisit((v) => ({ ...v, speech: v.speech + 1 }));
   }
   function next() {
     if (visit.phase === "arrive") {
@@ -204,5 +211,23 @@ export function useCompanion(
     pendingCenter,
     begin,
     speak,
+    replay,
   };
+}
+
+export function useCompanionHidden(until: number) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const update = () => setNow(Date.now());
+    update();
+    const task = window.setTimeout(update, Math.max(0, until - Date.now()));
+    window.addEventListener("focus", update);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      window.clearTimeout(task);
+      window.removeEventListener("focus", update);
+      document.removeEventListener("visibilitychange", update);
+    };
+  }, [until]);
+  return until > now;
 }

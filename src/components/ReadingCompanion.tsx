@@ -1,12 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Translate } from "../i18n";
 import type { Word } from "../memory";
 import {
   type CompanionSettings,
   type CompanionPreview,
+  type CompanionPosition,
   type Role,
 } from "../companions/types";
-import { companionStates, faceFor } from "../companions/states";
+import { companionStates, faceFor, stageLayout } from "../companions/states";
 import { useCompanion } from "../companions/useCompanion";
 import { CenterStage, centerStageVariables } from "./CenterStage";
 
@@ -18,7 +19,8 @@ type Props = {
   writing: boolean;
   blocked: boolean;
   alarm: boolean;
-  rail: boolean;
+  temporarilyHidden: boolean;
+  onPositionChange: (position: CompanionPosition) => void;
   t: Translate;
   children: React.ReactNode;
   preview?: CompanionPreview;
@@ -36,12 +38,27 @@ function Actor({
   t,
   preview,
   onPreviewApplied,
-}: Omit<Props, "role" | "children" | "rail"> & {
+  temporarilyHidden,
+  onPositionChange,
+  compact,
+}: Omit<Props, "role" | "children"> & {
   role: Role;
+  compact: boolean;
 }) {
   const [dragging, setDragging] = useState(false);
-  const pause = blocked || alarm || dragging;
-  const actor = useCompanion(role, settings, t, pause, writing);
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    if (!compact) setExpanded(false);
+  }, [compact]);
+  const pause = blocked || alarm || dragging || temporarilyHidden;
+  const actor = useCompanion(
+    role,
+    settings,
+    t,
+    pause,
+    writing,
+    temporarilyHidden,
+  );
   const anchor = useRef<HTMLDivElement>(null);
   const drag = useRef<{
     id: number;
@@ -82,7 +99,8 @@ function Actor({
   }, [isQuiz, actor.revision, words]);
 
   const face = actor.cue === "dragged" ? role.dragFace : faceFor[actor.cue];
-  const hidden = !writing && (drawing || blocked || alarm);
+  const hidden =
+    temporarilyHidden || (!writing && (drawing || blocked || alarm));
   const docked =
     writing &&
     (actor.pose === "center" ||
@@ -100,7 +118,56 @@ function Actor({
     document.addEventListener("click", click, true);
     return () => document.removeEventListener("click", click, true);
   }, [readyToLand]);
-  const canDrag = actor.pose === "center" && !writing && !hidden;
+  const avatar = compact && !expanded && size === "corner";
+  const canDrag =
+    !writing && !hidden && !avatar && pose !== "arrive" && pose !== "quidditch";
+  useEffect(() => {
+    const element = anchor.current;
+    const body = element?.querySelector("button");
+    if (!element || !body || writing || hidden || size !== "corner") return;
+    let frame = 0;
+    const clear = () => {
+      cancelAnimationFrame(frame);
+      element.dataset.near = "false";
+    };
+    const track = (event: PointerEvent) => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const rect = body.getBoundingClientRect();
+        const dx = Math.max(
+          rect.left - event.clientX,
+          0,
+          event.clientX - rect.right,
+        );
+        const dy = Math.max(
+          rect.top - event.clientY,
+          0,
+          event.clientY - rect.bottom,
+        );
+        element.dataset.near = String(
+          Math.hypot(dx, dy) <= stageLayout.nearRadius,
+        );
+      });
+    };
+    window.addEventListener("pointerdown", track, { passive: true });
+    window.addEventListener("pointermove", track, { passive: true });
+    const release = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") clear();
+    };
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", clear);
+    document.documentElement.addEventListener("pointerleave", clear);
+    window.addEventListener("blur", clear);
+    return () => {
+      clear();
+      window.removeEventListener("pointerdown", track);
+      window.removeEventListener("pointermove", track);
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", clear);
+      document.documentElement.removeEventListener("pointerleave", clear);
+      window.removeEventListener("blur", clear);
+    };
+  }, [writing, hidden, size]);
   const definition = quiz?.entry?.[2]?.split("\n")[0]?.trim();
   const hint = quiz
     ? answer
@@ -113,7 +180,7 @@ function Actor({
         : t("companionQuizWord").replace("{word}", quiz.w)
     : t("companionNoWords");
 
-  function finish(event: React.PointerEvent<HTMLButtonElement>) {
+  function finish(event: React.PointerEvent<HTMLButtonElement>, drop: boolean) {
     const touch = drag.current;
     if (!touch || touch.id !== event.pointerId) return;
     drag.current = null;
@@ -122,6 +189,22 @@ function Actor({
     setDragging(false);
     anchor.current?.style.removeProperty("--companion-drag-x");
     anchor.current?.style.removeProperty("--companion-drag-y");
+    if (drop) {
+      const area = anchor.current?.parentElement?.getBoundingClientRect();
+      if (area) {
+        const isLeft = event.clientX < area.left + area.width / 2;
+        const isTop = event.clientY < area.top + area.height / 2;
+        onPositionChange(
+          isLeft
+            ? isTop
+              ? "topLeft"
+              : "bottomLeft"
+            : isTop
+              ? "top"
+              : "bottom",
+        );
+      }
+    }
     actor.speak("returned", "reading");
   }
 
@@ -142,6 +225,7 @@ function Actor({
         data-center-pending={actor.pendingCenter}
         data-state={actor.cue}
         data-dragging={dragging}
+        data-avatar={avatar}
       >
         <CenterStage
           role={role}
@@ -151,8 +235,17 @@ function Actor({
           face={docked ? "reading" : face}
           size={size}
           quiet={writing}
+          moving={dragging}
+          layoutKey={settings.position + ":" + settings.scale + ":" + avatar}
           preview={settings.preview && actor.revision === previewRevision}
-          showDialogue={actor.bubble && !writing && !blocked && !alarm}
+          showDialogue={
+            !avatar &&
+            !hidden &&
+            (actor.bubble || pose === "arrive") &&
+            !writing &&
+            !blocked &&
+            !alarm
+          }
           dialogue={
             <>
               <p>{isQuiz && !quiz ? hint : actor.line}</p>
@@ -166,7 +259,10 @@ function Actor({
           }
           bodyProps={{
             title: role.personality.map(t).join(" · "),
-            "aria-label": t(role.displayName),
+            "aria-label": avatar
+              ? t("companionExpand").replace("{name}", t(role.displayName))
+              : t(role.displayName),
+            "aria-expanded": compact && size === "corner" ? !avatar : undefined,
             tabIndex: hidden || writing ? -1 : 0,
             ...{ "data-draggable": canDrag },
             onClick: () => {
@@ -174,17 +270,14 @@ function Actor({
                 suppress.current = false;
                 return;
               }
-              if (
-                hidden ||
-                writing ||
-                settings.focus ||
-                actor.pose === "arrive"
-              )
-                return;
-              if (isQuiz && quiz) {
+              if (hidden || writing || actor.pose === "arrive") return;
+              if (avatar) {
+                setExpanded(true);
+                actor.replay();
+              } else if (isQuiz && quiz) {
                 setAnswer(true);
                 actor.speak("praise");
-              } else if (actor.pose !== "center") actor.speak("praise");
+              } else if (actor.pose !== "center") actor.replay();
             },
             onPointerDown: (event) => {
               suppress.current = false;
@@ -216,9 +309,9 @@ function Actor({
               anchor.current?.style.setProperty("--companion-drag-x", x + "px");
               anchor.current?.style.setProperty("--companion-drag-y", y + "px");
             },
-            onPointerUp: finish,
-            onPointerCancel: finish,
-            onLostPointerCapture: finish,
+            onPointerUp: (event) => finish(event, true),
+            onPointerCancel: (event) => finish(event, false),
+            onLostPointerCapture: (event) => finish(event, false),
             onDragStart: (event) => event.preventDefault(),
           }}
         />
@@ -236,37 +329,37 @@ export function ReadingCompanion({
   writing,
   blocked,
   alarm,
-  rail,
+  temporarilyHidden,
+  onPositionChange,
   t,
   preview,
   onPreviewApplied,
 }: Props) {
   const page = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const element = page.current;
-    const article = element?.querySelector("article");
-    if (!element || !article || !role) return;
+  const [compact, setCompact] = useState(
+    () => innerWidth <= stageLayout.compactWidth,
+  );
+  useLayoutEffect(() => {
+    const element = page.current,
+      passage = element?.querySelector(".passage-layout");
+    if (!element || !passage || !role) return;
     let frame = 0;
     const update = () => {
       const wrap = element.getBoundingClientRect(),
-        rect = article.getBoundingClientRect();
+        rect = passage.getBoundingClientRect();
       const top = Math.max(0, rect.top),
         bottom = Math.min(innerHeight, rect.bottom);
-      const visible = bottom - top;
-      const middle =
-        visible > 0 ? (top + bottom) / 2 : (rect.top + rect.bottom) / 2;
       element.style.setProperty(
-        "--companion-page-middle",
-        middle - wrap.top + "px",
+        "--companion-area-x",
+        rect.left - wrap.left + "px",
       );
+      element.style.setProperty("--companion-area-y", top - wrap.top + "px");
+      element.style.setProperty("--companion-area-width", rect.width + "px");
       element.style.setProperty(
         "--companion-visible-area",
-        Math.max(0, visible) + "px",
+        Math.max(0, bottom - top) + "px",
       );
-      element.style.setProperty(
-        "--companion-page-x",
-        (rect.left + rect.right) / 2 - wrap.left + "px",
-      );
+      setCompact(Math.min(innerWidth, rect.width) <= stageLayout.compactWidth);
     };
     const schedule = () => {
       cancelAnimationFrame(frame);
@@ -274,7 +367,7 @@ export function ReadingCompanion({
     };
     const observer = new ResizeObserver(schedule);
     observer.observe(element);
-    observer.observe(article);
+    observer.observe(passage);
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
     update();
@@ -284,16 +377,20 @@ export function ReadingCompanion({
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
     };
-  }, [role, rail, settings.position]);
+  }, [role]);
   return (
     <section className="companion-zone">
       <div
         className="companion-page"
         data-companion={Boolean(role)}
-        data-companion-side={rail ? "left" : "right"}
         data-position={settings.position}
         ref={page}
-        style={centerStageVariables}
+        style={
+          {
+            ...centerStageVariables,
+            "--corner-scale": stageLayout.scales[settings.scale],
+          } as React.CSSProperties
+        }
       >
         {children}
         {role && (
@@ -308,6 +405,9 @@ export function ReadingCompanion({
             alarm={alarm}
             t={t}
             onPreviewApplied={onPreviewApplied}
+            temporarilyHidden={temporarilyHidden}
+            onPositionChange={onPositionChange}
+            compact={compact}
             preview={
               preview?.role === role.id && preview.focus === settings.focus
                 ? preview
