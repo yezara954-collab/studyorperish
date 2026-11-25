@@ -186,3 +186,42 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 
 - `docs/assets/index-OcoB1nCc.css`
 - `docs/assets/index-o8KtJ6WZ.js`
+
+## Stage 3 · 吼叫信与曼德拉草计时器
+
+手动部署时，用本包中的 `docs/` 完整替换现有 Pages 仓库的 `docs/`。
+
+- 阅读页点击「学习计时」选择 15、25、45、60 分钟或自定义 1–1440 分钟。开始后可点击角落图标查看剩余时间、暂停、继续或重置。
+- 「现在休息」开启 5 分钟休息，结束后可按原来选定的学习时长继续。「再读 5 分钟」会提高台词与音量强度，最高第 3 级。重置结束当前计时并回到时长选择。
+- 计时记录保存于 IndexedDB 的 `state`，键为 `study-or-perish:focus`，并包含在 JSON 备份中。学习与延时的记录包括开始时间、设定时长及完成状态。休息时间单独显示。
+- 提醒台词在 `src/i18n.ts`，不同等级的台词池、默认时长和音频路径在 `src/config.ts` 的 `focus` 中。将 `sounds.howl` 与 `sounds.cry` 设为素材链接后即可使用替换音效。界面配色及动画参数在 `src/tokens.css`。
+- 网页在后台还能执行时，会在获得授权后尝试显示通知。浏览器暂停页面或设备锁屏时，恢复后会按截止时间补上提醒。设置中的声音与震动开关独立。
+
+### 新增文件
+
+- `docs/assets/index-D22RDiFd.js`
+- `docs/assets/index-DDrlnnXj.css`
+- `src/components/FocusTimer.tsx`
+- `src/focusAudio.ts`
+- `src/focusTimer.ts`
+- `src/useFocusTimer.ts`
+
+### 修改文件
+
+- `README.md`
+- `docs/index.html`
+- `docs/sw.js`
+- `scripts/cache.mjs`
+- `src/config.ts`
+- `src/i18n.ts`
+- `src/main.tsx`
+- `src/memory.ts`
+- `src/reader.tsx`
+- `src/style.css`
+- `src/tokens.css`
+- `src/useLibrary.ts`
+
+### 删除文件
+
+- `docs/assets/index-C0FFpF1x.js`
+- `docs/assets/index-DG7Capie.css`

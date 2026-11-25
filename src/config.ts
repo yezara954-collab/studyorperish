@@ -29,3 +29,19 @@ export const quill = {
 } as const;
 
 export const eraserSizes = { small: 16, medium: 28, large: 48 } as const;
+
+export const focus = {
+  presets: [15, 25, 45, 60],
+  defaultMinutes: 25,
+  restMinutes: 5,
+  extensionMinutes: 5,
+  maxMinutes: 1440,
+  maxAnger: 3,
+  sounds: { howl: null as string | null, cry: null as string | null },
+  reminders: [
+    ["focusReminder0a", "focusReminder0b"],
+    ["focusReminder1a", "focusReminder1b"],
+    ["focusReminder2a", "focusReminder2b"],
+    ["focusReminder3a", "focusReminder3b"],
+  ],
+} as const;

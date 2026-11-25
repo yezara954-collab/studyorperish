@@ -1,5 +1,63 @@
 import site from "./site.json";
 export const messages = {
+  focusTimer: ["Study timer", "学习计时"],
+  focusMinutes: ["Learning time (minutes)", "学习时长（分钟）"],
+  focusCustom: ["Custom minutes", "自定义分钟数"],
+  focusStart: ["Start timer", "开始计时"],
+  focusPause: ["Pause", "暂停"],
+  focusResume: ["Resume", "继续"],
+  focusReset: ["Reset", "重置"],
+  focusRest: ["Rest now", "现在休息"],
+  focusExtend: ["Five more minutes", "再读 5 分钟"],
+  focusDone: ["Done", "结束"],
+  focusContinue: ["Continue studying", "继续学习"],
+  focusRestLabel: ["Rest timer", "休息计时"],
+  focusSound: ["Timer sound", "计时提醒声音"],
+  focusVibration: ["Timer vibration", "计时提醒震动"],
+  focusHourglass: ["View remaining time", "查看剩余时间"],
+  focusMandrake: ["Mandrake", "曼德拉草"],
+  focusHowler: ["Howler", "吼叫信"],
+  focusStorageError: [
+    "Could not access the study timer.",
+    "无法读取或保存计时数据。",
+  ],
+  focusTimeUp: ["Time’s up", "时间到"],
+  focusRestFinished: [
+    "Break over. Ready to read again?",
+    "休息结束，准备继续阅读了吗？",
+  ],
+  focusReminder0a: [
+    "Time’s up. Go rest your eyes.",
+    "时间到。去休息一下眼睛。",
+  ],
+  focusReminder0b: [
+    "That’s time. Mark your page and take a breath.",
+    "时间到了。夹好书签，喘口气。",
+  ],
+  focusReminder1a: [
+    "Five more minutes are up. Give your eyes a break.",
+    "再读的五分钟到了，让眼睛休息一下。",
+  ],
+  focusReminder1b: [
+    "You asked for five minutes. I counted every one.",
+    "你要了五分钟。我一分钟都没少数。",
+  ],
+  focusReminder2a: [
+    "That was your second extension. Put the book down.",
+    "第二次延时结束。把书放下。",
+  ],
+  focusReminder2b: [
+    "I am getting louder. Take a break, please.",
+    "我要提高音量了。拜托，休息一下。",
+  ],
+  focusReminder3a: [
+    "ENOUGH. CLOSE THE BOOK AND REST YOUR EYES.",
+    "够了。合上书，让眼睛休息。",
+  ],
+  focusReminder3b: [
+    "STEP AWAY FROM THE PAGE. THE MANDRAKE AGREES.",
+    "离开书页！曼德拉草也同意。",
+  ],
   handwritingMode: ["Handwriting", "手写批注"],
   highlightMode: ["Highlighting", "高光批注"],
   eraser: ["Eraser", "橡皮擦"],

@@ -1,3 +1,4 @@
+import { FocusTimer } from "./components/FocusTimer";
 import { Notebook } from "./components/Notebook";
 import React from "react";
 import { createRoot } from "react-dom/client";
@@ -11,6 +12,7 @@ import "./style.css";
 
 function App() {
   const library = useLibrary();
+  const [timerOpened, setTimerOpened] = React.useState(false);
   const {
     view,
     bin,
@@ -62,6 +64,14 @@ function App() {
           </nav>
         </div>
       </header>
+      <FocusTimer
+        t={t}
+        opened={timerOpened}
+        setOpened={setTimerOpened}
+        preferencesReady={library.ready}
+        sound={prefs.focusSound}
+        vibration={prefs.focusVibration}
+      />
       {book ? (
         <Reader
           key={book.id}
@@ -75,6 +85,7 @@ function App() {
           setPrefs={setPrefs}
           add={collectWord}
           onBack={() => setBook(null)}
+          onTimer={() => setTimerOpened(true)}
         />
       ) : (
         <main className="desk">
@@ -203,6 +214,28 @@ function App() {
                         </option>
                       ))}
                     </select>
+                  </label>
+                </div>
+                <div className="memory-field">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={prefs.focusSound}
+                      onChange={(e) =>
+                        setPrefs({ ...prefs, focusSound: e.target.checked })
+                      }
+                    />{" "}
+                    {t("focusSound")}
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={prefs.focusVibration}
+                      onChange={(e) =>
+                        setPrefs({ ...prefs, focusVibration: e.target.checked })
+                      }
+                    />{" "}
+                    {t("focusVibration")}
                   </label>
                 </div>
                 <button onClick={() => setModal("about")}>{t("about")}</button>

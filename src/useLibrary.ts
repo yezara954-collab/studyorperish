@@ -21,9 +21,13 @@ const defaultPrefs = {
   line: 1.75,
   mode: "page",
   zhDefs: false,
+  focusSound: true,
+  focusVibration: true,
   fingerInk: false,
   leftHand: false,
   inkColor: "brown",
+  eraserSize: "medium",
+  eraserMode: "partial",
 };
 export function useLibrary() {
   const [books, setBooks] = useState<Book[]>(starters),
@@ -52,7 +56,9 @@ export function useLibrary() {
         const allBooks = [...starters, ...imported];
         setBooks(allBooks);
         setBin(await read("bin"));
-        const previous: Annotation[] = await read("annotations");
+        const previous: Annotation[] = (
+          await Promise.all([read("strokes"), read("highlights")])
+        ).flat();
         const expanded = expandLegacyHighlights(previous, allBooks);
         setAnnotations(expanded);
         const changed = expanded.filter((item) => !previous.includes(item));
@@ -153,8 +159,10 @@ export function useLibrary() {
         ...values.filter((value) => !replaced.has(value.id)),
         ...updates,
       ]);
+      return true;
     } catch {
       setNotice(t("annotationSaveFailed"));
+      return false;
     }
   }
   const saveAnnotation = (annotation: Annotation) =>

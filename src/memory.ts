@@ -1,3 +1,4 @@
+import { focusStateKey, isFocusData } from "./focusTimer";
 import { committed, db, stores } from "./books";
 
 type Anchor = { bookId: string; chapter: number; start: number };
@@ -270,8 +271,13 @@ function validBackupRecord(store: keyof BackupRows, key: string, record: any) {
     return (
       nonnegative(record.totalReviews) && nonnegative(record.reviewedWords)
     );
+  if (key === focusStateKey) return isFocusData(record);
   if (key === "prefs")
     return (
+      (record.focusSound === undefined ||
+        typeof record.focusSound === "boolean") &&
+      (record.focusVibration === undefined ||
+        typeof record.focusVibration === "boolean") &&
       [undefined, "en", "zh"].includes(record.lang) &&
       [undefined, "page", "scroll"].includes(record.mode) &&
       (record.size === undefined || (record.size >= 16 && record.size <= 32)) &&

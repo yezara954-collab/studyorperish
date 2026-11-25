@@ -13,6 +13,7 @@ type Props = ReaderProps & {
     deletions?: string[],
   ) => Promise<boolean>;
   backLabel: string;
+  onTimer: () => void;
 };
 export function Reader(props: Props) {
   const state = useReader(props);
@@ -265,6 +266,7 @@ export function Reader(props: Props) {
     <main className="reader">
       <div className="readerbar">
         <button onClick={onBack}>‹ {props.backLabel}</button>
+        <button onClick={props.onTimer}>{t("focusTimer")}</button>
         <button onClick={() => setFormat(!format)}>
           Aa · {t("readingSettings")}
         </button>

@@ -84,13 +84,28 @@ export function useReader({
       pages.findLastIndex((v) => v <= offset),
     ),
     scroll = prefs.mode === "scroll";
+  const jumping = useRef(Boolean(initial?.highlight));
   const anchor = useRef(offset);
   anchor.current = offset;
   useLayoutEffect(() => {
     const b = box.current;
     if (!b) return;
     b.scrollTop = 0;
-    if (scroll || initial?.highlight) {
+    if (jumping.current) {
+      const sentence = [
+        ...b.querySelectorAll<HTMLElement>("[data-sentence-id]"),
+      ].find((span) => span.dataset.sentenceId === initial?.sentenceId);
+      if (sentence) {
+        b.scrollTop +=
+          sentence.getBoundingClientRect().top -
+          b.getBoundingClientRect().top -
+          12;
+        jumping.current = false;
+        return;
+      }
+      jumping.current = false;
+    }
+    if (scroll) {
       const els = [...b.querySelectorAll<HTMLElement>("[data-at]")];
       const el = els.findLast((x) => Number(x.dataset.at) <= anchor.current);
       if (el) b.scrollTop = el.offsetTop - 12;

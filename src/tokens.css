@@ -286,3 +286,35 @@
   --space-memory-section: 16px 0;
   --rows-personal-note: 4.5em;
 }
+
+:root {
+  --focus-icon-size: 36px;
+  --focus-alert-icon-size: 72px;
+  --focus-dock-gap: var(--space-nav-button);
+  --focus-dock-padding: var(--space-mast);
+  --focus-leaf-color: #729761;
+  --focus-root-color: #d6b080;
+  --focus-pot-color: #9e5941;
+  --focus-envelope-cool: #dbcaa4;
+  --focus-envelope-hot: #cf6556;
+  --focus-ink-color: var(--quill-ink-brown);
+  --focus-seal-color: var(--quill-ink-red);
+  --focus-smoke-color: #cbb4a0;
+  --focus-tear-color: #91b5d0;
+  --focus-art-stroke: 2px;
+  --focus-countdown-size: clamp(2rem, 8vw, 3.5rem);
+  --focus-stir-duration: 5.5s;
+  --focus-shake-duration: 1.28s;
+  --focus-final-shake: 420ms;
+  --focus-smoke-duration: 1.6s;
+  --focus-cry-duration: 1.1s;
+  --focus-unfold-duration: 680ms;
+  --focus-stir-angle: 7deg;
+  --focus-shake-angle: 9deg;
+  --focus-smoke-rise: -5px;
+  --focus-unfold-folded: 14%;
+  --focus-unfold-half: 68%;
+  --focus-unfold-angle: -22deg;
+  --focus-art-dim: 0.28;
+  --focus-art-muted: 0.72;
+}
