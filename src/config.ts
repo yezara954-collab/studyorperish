@@ -13,3 +13,17 @@ export const iconPaths: Record<string, string> = {
   notebook: "M5 3h14v18H5zM8 3v18M11 8h5M11 12h5",
   book: "M2 5q6-2 10 2 5-4 10-2v14q-6-2-10 2-5-4-10-2zM12 7v14",
 };
+
+export const quill = {
+  image: "./assets/quill.svg",
+  cursorFallback: "./assets/quill-cursor.png",
+  cursorHotspot: [3, 29],
+  spriteSize: 48,
+  spriteHotspot: [4.5, 43.5],
+  rightTilt: 0,
+  leftTilt: 0,
+  fadeMs: 300,
+  hoverOpacity: 0.45,
+  width: 2.25,
+  colors: ["brown", "black", "blue", "red"],
+} as const;

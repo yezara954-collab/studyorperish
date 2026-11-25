@@ -405,7 +405,7 @@ article h1 {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.passage span:hover {
+.passage [data-at]:hover {
   background: var(--color-passage-span-hover-background);
   cursor: pointer;
 }
@@ -631,39 +631,62 @@ nav, .readerbar {
 }
 .passage-layout {
   display: flex;
-  gap: var(--space-nav-button);
+  position: relative;
   flex: var(--flex-passage);
   min-height: var(--space-body);
 }
-.passage[data-tool="read"][data-paged="true"] {
+.passage[data-paged="true"] {
   touch-action: pan-y pinch-zoom;
 }
-.passage[data-tool="highlight"] {
+.passage-layout[data-writing="true"] .passage {
   touch-action: none;
+  overscroll-behavior: contain;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: var(--quill-cursor), crosshair;
 }
-.passage[data-tool="highlight"] [data-at] {
-  cursor: crosshair;
+.quill-canvas, .quill-sprite {
+  position: absolute;
+  pointer-events: none;
+  touch-action: none;
 }
-.passage .reading-highlight, .passage .reading-highlight:hover {
+.quill-canvas {
+  inset: var(--space-body);
+  width: var(--quill-full);
+  height: var(--quill-full);
+}
+.quill-sprite {
+  width: var(--quill-size);
+  height: var(--quill-size);
+  top: calc(-1 * var(--quill-hotspot-y));
+  left: calc(-1 * var(--quill-hotspot-x));
+  transform-origin: var(--quill-hotspot-x) var(--quill-hotspot-y);
+  opacity: var(--quill-hidden);
+  transition: opacity var(--quill-fade) linear;
+  will-change: transform, opacity;
+}
+.quill-sprite[data-visible="true"] { transition: none; }
+.passage .reading-highlight {
   color: var(--color-reading-highlight-text);
   background: var(--color-reading-highlight);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  animation: quill-spread var(--quill-spread-time) ease-out;
 }
-.margin-ink {
-  flex: none;
-  width: var(--width-handwriting);
-  border-inline-start: var(--border-handwriting);
-  fill: none;
-  stroke: var(--color-handwriting);
-  stroke-width: var(--stroke-handwriting);
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.passage [data-located="true"] {
+  animation: quill-locate var(--quill-locate-time) ease-in-out var(--quill-locate-repeats);
 }
-.margin-ink[data-enabled="true"] {
-  background: var(--color-handwriting-paper);
-  touch-action: none;
-  cursor: crosshair;
+@keyframes quill-spread {
+  from { background: var(--quill-wash-clear); }
+  to { background: var(--color-reading-highlight); }
+}
+@keyframes quill-locate {
+  50% { background: var(--color-button-focus-visible-outline); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .passage .reading-highlight, .passage [data-located="true"] { animation: none; }
+  .passage [data-located="true"] { outline: var(--quill-locate-outline); }
 }
 .memory-stack {
   display: grid;

@@ -1,16 +1,20 @@
 import site from "./site.json";
 export const messages = {
+  quillTool: ["Quill", "羽毛笔"],
+  undoStroke: ["Undo", "撤销"],
+  fingerInk: ["Allow finger writing", "允许手指书写"],
+  leftHand: ["Left-handed mode", "左手模式"],
+  inkColor: ["Ink color", "墨水颜色"],
+  brown: ["Dark brown", "深棕"],
+  black: ["Black", "黑"],
+  blue: ["Blue-black", "蓝黑"],
+  red: ["Dark red", "暗红"],
+  inkMayShift: ["Ink may shift after a type size change.", "墨迹可能错位。"],
+
   notebook: ["Wow Notebook", "哇赛赛笔记本"],
   notebookSubtitle: ["Highlights from your reading.", "阅读时留下的高光。"],
   readingTools: ["Reading tools", "阅读工具"],
   read: ["Read", "阅读"],
-  highlight: ["Quill highlight", "羽毛笔高光"],
-  ink: ["Freehand", "自由手写"],
-  highlightBoundary: ["Highlight boundary", "高光范围"],
-  byWord: ["By word", "按单词"],
-  bySentence: ["By sentence", "按句子"],
-  undoInk: ["Undo last stroke", "撤销最后一笔"],
-  inkMargin: ["Handwriting margin", "页边手写区"],
   filterBook: ["Filter by book", "按书筛选"],
   allBooks: ["All books", "全部书籍"],
   emptyNotebook: [

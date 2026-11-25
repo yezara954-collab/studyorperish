@@ -2,7 +2,7 @@ import {
   collectWord as storeWord,
   gradeWord,
   getReviewProgress,
-  removeHighlight,
+  writeAnnotations,
   type Annotation,
   type Highlight,
   type Word,
@@ -10,6 +10,7 @@ import {
 } from "./memory";
 import { useState, useEffect } from "react";
 import { starters, Book, read, save } from "./books";
+import { expandLegacyHighlights } from "./sentences";
 import { importBook } from "./import";
 import { sigilPaths } from "./config";
 import site from "./site.json";
@@ -20,6 +21,9 @@ const defaultPrefs = {
   line: 1.75,
   mode: "page",
   zhDefs: false,
+  fingerInk: false,
+  leftHand: false,
+  inkColor: "brown",
 };
 export function useLibrary() {
   const [books, setBooks] = useState<Book[]>(starters),
@@ -45,9 +49,17 @@ export function useLibrary() {
     (async () => {
       try {
         const imported = await read("books");
-        setBooks([...starters, ...imported]);
+        const allBooks = [...starters, ...imported];
+        setBooks(allBooks);
         setBin(await read("bin"));
-        setAnnotations(await read("annotations"));
+        const previous: Annotation[] = await read("annotations");
+        const expanded = expandLegacyHighlights(previous, allBooks);
+        setAnnotations(expanded);
+        const changed = expanded.filter((item) => !previous.includes(item));
+        if (changed.length)
+          await writeAnnotations(changed).catch(() =>
+            setNotice(t("annotationSaveFailed")),
+          );
         setReviewProgress(await getReviewProgress());
         setPreferences({ ...defaultPrefs, ...(await read("state", "prefs")) });
         setReady(true);
@@ -92,7 +104,12 @@ export function useLibrary() {
   }
   async function open(
     b: Book,
-    target?: { ch: number; offset: number; highlight?: boolean },
+    target?: {
+      ch: number;
+      offset: number;
+      highlight?: boolean;
+      sentenceId?: string;
+    },
   ) {
     try {
       setPosition(target ?? (await read("state", b.id)));
@@ -122,25 +139,27 @@ export function useLibrary() {
     await storeWord({ ...word, source: book.title });
     setBin(await read("bin"));
   }
-  async function saveAnnotation(annotation: Annotation) {
+  async function changeAnnotations(
+    updates: Annotation[],
+    deletions: string[] = [],
+  ) {
     try {
-      await save("annotations", annotation.id, annotation);
+      await writeAnnotations(updates, deletions);
+      const replaced = new Set([
+        ...deletions,
+        ...updates.map((item) => item.id),
+      ]);
       setAnnotations((values) => [
-        ...values.filter((value) => value.id !== annotation.id),
-        annotation,
+        ...values.filter((value) => !replaced.has(value.id)),
+        ...updates,
       ]);
     } catch {
       setNotice(t("annotationSaveFailed"));
     }
   }
-  async function deleteAnnotation(id: string) {
-    try {
-      await removeHighlight(id);
-      setAnnotations((values) => values.filter((value) => value.id !== id));
-    } catch {
-      setNotice(t("annotationSaveFailed"));
-    }
-  }
+  const saveAnnotation = (annotation: Annotation) =>
+    changeAnnotations([annotation]);
+  const deleteAnnotation = (id: string) => changeAnnotations([], [id]);
   function jumpToHighlight(highlight: Highlight) {
     const target = books.find((value) => value.id === highlight.bookId);
     if (target?.chapters[highlight.chapter]) {
@@ -148,6 +167,7 @@ export function useLibrary() {
         ch: highlight.chapter,
         offset: highlight.start,
         highlight: true,
+        sentenceId: highlight.sentenceId,
       });
     } else setNotice(t("unableToOpenThisBook"));
   }
@@ -189,6 +209,7 @@ export function useLibrary() {
     ordered,
     collectWord,
     annotations,
+    changeAnnotations,
     saveAnnotation,
     deleteAnnotation,
     jumpToHighlight,

@@ -6,7 +6,7 @@ import { Icon, Sigil } from "./components/Icons";
 import { Bookshelf } from "./components/Bookshelf";
 import { TrashBin } from "./components/TrashBin";
 import { useLibrary } from "./useLibrary";
-import { illustrations, companion } from "./config";
+import { illustrations, companion, quill } from "./config";
 import "./style.css";
 
 function App() {
@@ -68,8 +68,7 @@ function App() {
           book={book}
           backLabel={t(view === "notebook" ? "notebook" : "bookshelf")}
           annotations={library.annotations}
-          saveAnnotation={library.saveAnnotation}
-          deleteAnnotation={library.deleteAnnotation}
+          changeAnnotations={library.changeAnnotations}
           t={t}
           initial={pos}
           prefs={prefs}
@@ -169,6 +168,43 @@ function App() {
                     {t("showChineseDefinitions")}
                   </label>
                 </p>
+                <div className="memory-field">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={prefs.fingerInk}
+                      onChange={(e) =>
+                        setPrefs({ ...prefs, fingerInk: e.target.checked })
+                      }
+                    />{" "}
+                    {t("fingerInk")}
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={prefs.leftHand}
+                      onChange={(e) =>
+                        setPrefs({ ...prefs, leftHand: e.target.checked })
+                      }
+                    />{" "}
+                    {t("leftHand")}
+                  </label>
+                  <label>
+                    {t("inkColor")}{" "}
+                    <select
+                      value={prefs.inkColor}
+                      onChange={(e) =>
+                        setPrefs({ ...prefs, inkColor: e.target.value })
+                      }
+                    >
+                      {quill.colors.map((color) => (
+                        <option value={color} key={color}>
+                          {t(color)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
                 <button onClick={() => setModal("about")}>{t("about")}</button>
               </>
             ) : modal === "about" ? (

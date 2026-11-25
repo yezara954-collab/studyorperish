@@ -3,6 +3,8 @@ import { committed, db, stores } from "./books";
 type Anchor = { bookId: string; chapter: number; start: number };
 export type Highlight = Anchor & {
   kind: "highlight";
+  sentenceId?: string;
+  strokeId?: string;
   id: string;
   bookTitle: string;
   chapterTitle: string;
@@ -18,7 +20,16 @@ export type Ink = Anchor & {
   points: Point[];
   createdAt: number;
 };
-export type Annotation = Highlight | Ink;
+export type AnchorPoint = { at: number; x: number; y: number; width: number };
+export type QuillStroke = Anchor & {
+  kind: "quill";
+  id: string;
+  points: AnchorPoint[];
+  color: string;
+  fontSize: number;
+  createdAt: number;
+};
+export type Annotation = Highlight | Ink | QuillStroke;
 export type Word = {
   w: string;
   entry?: (string | null)[];
@@ -32,9 +43,14 @@ const day = 86_400_000;
 const initialStats = { totalReviews: 0, reviewedWords: 0 };
 export type ReviewStats = typeof initialStats;
 
-export async function removeHighlight(id: string) {
+export async function writeAnnotations(
+  updates: Annotation[],
+  deletions: string[] = [],
+) {
   const transaction = (await db).transaction("annotations", "readwrite");
-  transaction.objectStore("annotations").delete(id);
+  const store = transaction.objectStore("annotations");
+  for (const id of deletions) store.delete(id);
+  for (const item of updates) store.put(item, item.id);
   await committed(transaction);
 }
 
@@ -206,7 +222,20 @@ function validBackupRecord(store: keyof BackupRows, key: string, record: any) {
         ) &&
           nonnegative(record.end) &&
           record.end > record.start
-      : record.kind === "ink" &&
+      : record.kind === "quill"
+        ? ["brown", "black", "blue", "red"].includes(record.color) &&
+          Number.isFinite(record.fontSize) &&
+          record.fontSize > 0 &&
+          Array.isArray(record.points) &&
+          record.points.length > 0 &&
+          record.points.every(
+            (point: any) =>
+              point &&
+              nonnegative(point.at) &&
+              [point.x, point.y, point.width].every(Number.isFinite) &&
+              point.width > 0,
+          )
+        : record.kind === "ink" &&
           Array.isArray(record.points) &&
           record.points.length > 0 &&
           record.points.every(
@@ -229,7 +258,11 @@ function validBackupRecord(store: keyof BackupRows, key: string, record: any) {
       (record.size === undefined || (record.size >= 16 && record.size <= 32)) &&
       (record.line === undefined ||
         (record.line >= 1.3 && record.line <= 2.3)) &&
-      (record.zhDefs === undefined || typeof record.zhDefs === "boolean")
+      (record.zhDefs === undefined || typeof record.zhDefs === "boolean") &&
+      (record.fingerInk === undefined ||
+        typeof record.fingerInk === "boolean") &&
+      (record.leftHand === undefined || typeof record.leftHand === "boolean") &&
+      [undefined, "brown", "black", "blue", "red"].includes(record.inkColor)
     );
   return nonnegative(record.ch) && nonnegative(record.offset);
 }

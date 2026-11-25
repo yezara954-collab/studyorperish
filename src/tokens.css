@@ -272,12 +272,17 @@
 :root {
   --color-reading-highlight: #e5bd61;
   --color-reading-highlight-text: #2c251e;
-  --color-handwriting: #594529;
-  --color-handwriting-rule: #a38e6770;
-  --color-handwriting-paper: #d8c39a44;
-  --border-handwriting: 1px dashed var(--color-handwriting-rule);
-  --width-handwriting: clamp(76px, 20vw, 190px);
-  --stroke-handwriting: 2.25px;
+  --quill-ink-brown: #594529;
+  --quill-ink-black: #211d19;
+  --quill-ink-blue: #26374e;
+  --quill-ink-red: #742d36;
+  --quill-wash-clear: #e5bd6124;
+  --quill-full: 100%;
+  --quill-hidden: 0;
+  --quill-spread-time: 390ms;
+  --quill-locate-time: 520ms;
+  --quill-locate-repeats: 3;
+  --quill-locate-outline: 1px solid var(--color-button-focus-visible-outline);
   --space-memory-section: 16px 0;
   --rows-personal-note: 4.5em;
 }

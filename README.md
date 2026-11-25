@@ -98,3 +98,52 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 
 - `docs/assets/index-CIZ3Jiw2.js`
 - `docs/assets/index-DkFd6vbL.css`
+
+## Stage 2 · 羽毛笔批注重做
+
+把包里的 `docs/` 完整替换到现有 Pages 仓库的同名目录。使用原站点地址时，旧笔记会按保存的章节和字符范围补全为原文整句。跨句片段会拆成多条，个人批注会随迁移保留。旧页边笔迹以原文锚点为基准迁入正文右侧。
+
+### 阅读页
+
+- 阅读模式保留查词和手势。羽毛笔模式下用 Apple Pencil 或鼠标书写，手指可滑动或翻页。需要用手指写字时，到「设置」开启「允许手指书写」。
+- 沿文字行划过可直接高亮连续整句。其他笔画作为墨迹保存。「撤销」撤回本章最近一笔。一次扫过多句时，撤销会移除该笔新增的所有句子。
+- 墨迹锚定到正文字符并随布局重算。字号变化时会显示提示，跨换行的自由笔迹可能发生形变。
+- 笔记本点原句会跳回并闪烁定位。个人批注、删除、复习与 JSON 备份沿用 Stage 2。
+
+### 替换羽毛笔素材
+
+`src/config.ts` 内的 `quill` 配置集中管理图片路径、桌面光标热点、触屏羽毛笔宽度与热点、左右手倾角、墨迹基准宽度和渐隐时间。替换 `public/assets/quill.svg` 时，可同步替换 `public/assets/quill-cursor.png` 并调整热点。前者用于触屏图层和桌面光标，后者供浏览器回退。墨色、整句高光和定位动画在 `src/tokens.css` 中配置。
+
+### 相对原 Stage 2 的新增文件
+
+- `docs/assets/index-OcoB1nCc.css`
+- `docs/assets/index-o8KtJ6WZ.js`
+- `docs/assets/quill-cursor.png`
+- `docs/assets/quill.svg`
+- `public/assets/quill-cursor.png`
+- `public/assets/quill.svg`
+- `src/quillGeometry.ts`
+- `src/sentences.ts`
+- `src/useQuill.ts`
+
+### 修改文件
+
+- `README.md`
+- `docs/index.html`
+- `docs/sw.js`
+- `src/config.ts`
+- `src/i18n.ts`
+- `src/main.tsx`
+- `src/memory.ts`
+- `src/reader.tsx`
+- `src/style.css`
+- `src/tokens.css`
+- `src/useLibrary.ts`
+- `src/useReader.ts`
+
+### 删除文件
+
+- `docs/assets/index-B4GhuIB_.js`
+- `docs/assets/index-BvL_CU2I.css`
+- `src/components/MarginInk.tsx`
+- `src/useReadingTools.ts`

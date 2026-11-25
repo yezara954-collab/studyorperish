@@ -1,13 +1,16 @@
 import React from "react";
 import { useReader, type ReaderProps } from "./useReader";
-import { useReadingTools } from "./useReadingTools";
-import { MarginInk } from "./components/MarginInk";
-import type { Annotation, Highlight, Ink, Point } from "./memory";
+import { useQuill } from "./useQuill";
+import { quill } from "./config";
+import { sentencesOf } from "./sentences";
+import type { Annotation, Highlight, Ink, QuillStroke } from "./memory";
 import { WordCard } from "./components/WordCard";
 type Props = ReaderProps & {
   annotations: Annotation[];
-  saveAnnotation: (annotation: Annotation) => void;
-  deleteAnnotation: (id: string) => void;
+  changeAnnotations: (
+    updates: Annotation[],
+    deletions?: string[],
+  ) => Promise<void>;
   backLabel: string;
 };
 export function Reader(props: Props) {
@@ -15,14 +18,12 @@ export function Reader(props: Props) {
   const { book, prefs, t, onBack } = props;
   const {
     ch,
-    offset,
     page,
     pages,
     scroll,
     box,
     timer,
     chapter,
-    words,
     format,
     setFormat,
     error,
@@ -33,80 +34,167 @@ export function Reader(props: Props) {
     word,
     persist,
   } = state;
-  const current = props.annotations.filter(
-    (item) => item.bookId === book.id && item.chapter === ch,
+  const [writing, setWriting] = React.useState(false);
+  const [flash, setFlash] = React.useState<string | undefined>(
+    props.initial?.sentenceId,
   );
-  const highlights = current.filter(
-    (item): item is Highlight => item.kind === "highlight",
+  React.useEffect(() => {
+    const timeout = setTimeout(() => setFlash(undefined), 1700);
+    return () => clearTimeout(timeout);
+  }, []);
+  const sentences = React.useMemo(
+    () => sentencesOf(chapter.text, ch),
+    [chapter.text, ch],
   );
-  const railStart = pages[page];
-  const railEnd = pages[page + 1] ?? Infinity;
-  const strokes = current
-    .filter(
-      (item): item is Ink =>
-        item.kind === "ink" && item.start >= railStart && item.start < railEnd,
-    )
-    .sort((a, b) => a.createdAt - b.createdAt);
-  const tools = useReadingTools(
-    chapter.text,
-    scroll,
+  const current = React.useMemo(
+    () =>
+      props.annotations.filter(
+        (item) => item.bookId === book.id && item.chapter === ch,
+      ),
+    [props.annotations, book.id, ch],
+  );
+  const highlights = new Set(
+    current.flatMap((item) =>
+      item.kind === "highlight" ? [item.sentenceId] : [],
+    ),
+  );
+  const strokes = React.useMemo(
+    () =>
+      current.filter(
+        (item): item is Ink | QuillStroke => item.kind !== "highlight",
+      ),
+    [current],
+  );
+  const latest = current.reduce<Annotation | undefined>(
+    (best, item) => (!best || item.createdAt >= best.createdAt ? item : best),
+    undefined,
+  );
+  const start = scroll ? 0 : pages[page];
+  const end = scroll
+    ? chapter.text.length
+    : (pages[page + 1] ?? chapter.text.length);
+  const tools = useQuill({
+    box,
+    enabled: writing,
+    paged: !scroll,
+    size: prefs.size,
+    strokes,
     turn,
-    ({ start, end }) => {
-      if (highlights.some((item) => item.start === start && item.end === end))
-        return;
-      props.saveAnnotation({
-        id: crypto.randomUUID(),
-        kind: "highlight",
-        bookId: book.id,
-        bookTitle: book.title,
-        chapter: ch,
-        chapterTitle: chapter.title,
-        start,
-        end,
-        quote: chapter.text.slice(start, end),
-        note: "",
-        createdAt: Date.now(),
-      });
+    layoutKey: [ch, start, end, prefs.line].join(":"),
+    fingerInk: prefs.fingerInk,
+    leftHand: prefs.leftHand,
+    color: prefs.inkColor,
+    commit(ids, points) {
+      const anchor = { bookId: book.id, chapter: ch, createdAt: Date.now() };
+      const strokeId = crypto.randomUUID();
+      if (ids.length) {
+        const requested = new Set(ids);
+        const entries = sentences
+          .filter(
+            (sentence) =>
+              requested.has(sentence.id) && !highlights.has(sentence.id),
+          )
+          .map((sentence): Highlight => ({
+            ...anchor,
+            kind: "highlight",
+            id: JSON.stringify([book.id, sentence.id]),
+            strokeId,
+            bookTitle: book.title,
+            chapterTitle: chapter.title,
+            sentenceId: sentence.id,
+            start: sentence.start,
+            end: sentence.end,
+            quote: sentence.text,
+            note: "",
+          }));
+        if (entries.length) void props.changeAnnotations(entries);
+      } else if (points.length) {
+        void props.changeAnnotations([
+          {
+            ...anchor,
+            kind: "quill",
+            id: strokeId,
+            start: points[0].at,
+            points,
+            color: prefs.inkColor,
+            fontSize: prefs.size,
+          },
+        ]);
+      }
     },
-  );
-  const ranges = tools.draft ? [...highlights, tools.draft] : highlights;
-  const reading = tools.tool === "read";
-  function saveStroke(points: Point[]) {
-    props.saveAnnotation({
-      id: crypto.randomUUID(),
-      kind: "ink",
-      bookId: book.id,
-      chapter: ch,
-      start: scroll ? offset : railStart,
-      points,
-      createdAt: Date.now(),
-    });
+  });
+  function undo() {
+    if (!latest) return;
+    const ids =
+      latest.kind === "highlight" && latest.strokeId
+        ? current
+            .filter(
+              (item) =>
+                item.kind === "highlight" && item.strokeId === latest.strokeId,
+            )
+            .map((item) => item.id)
+        : [latest.id];
+    void props.changeAnnotations([], ids);
   }
-  function paintSeparator(value: string, start: number) {
-    if (!ranges.length) return value;
-    const end = start + value.length;
-    const bounds = [
-      ...new Set([
-        start,
-        end,
-        ...ranges.flatMap((range) =>
-          [range.start, range.end].filter(
-            (position) => position > start && position < end,
-          ),
-        ),
-      ]),
-    ].sort((a, b) => a - b);
-    return bounds.slice(0, -1).map((left, index) => {
-      const text = chapter.text.slice(left, bounds[index + 1]);
-      return ranges.some((range) => range.start <= left && range.end > left) ? (
-        <mark key={left} className="reading-highlight">
-          {text}
-        </mark>
-      ) : (
-        <React.Fragment key={left}>{text}</React.Fragment>
-      );
-    });
+
+  const passage: React.ReactNode[] = [];
+  let previousEnd = start;
+  for (const sentence of sentences) {
+    if (sentence.end <= start) continue;
+    if (sentence.start >= end) break;
+    const left = Math.max(start, sentence.start),
+      right = Math.min(end, sentence.end);
+    passage.push(chapter.text.slice(previousEnd, left));
+    passage.push(
+      <span
+        key={sentence.id}
+        data-sentence-id={sentence.id}
+        data-start={left}
+        className={
+          highlights.has(sentence.id) ? "reading-highlight" : undefined
+        }
+        data-located={
+          flash === sentence.id && props.initial?.ch === ch ? "true" : undefined
+        }
+      >
+        {Array.from(
+          chapter.text
+            .slice(left, right)
+            .matchAll(/[A-Za-z]+(?:['’-][A-Za-z]+)*|[^A-Za-z]+/g),
+          (match) => {
+            match.index = left + match.index!;
+            if (writing || !/^[a-z]/i.test(match[0])) return match[0];
+            return (
+              <span
+                role="button"
+                tabIndex={0}
+                key={match.index}
+                data-at={match.index}
+                onClick={() => open(match)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") open(match);
+                }}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  open(match);
+                }}
+                onPointerDown={() => {
+                  timer.current = setTimeout(() => open(match), 500);
+                }}
+                onPointerMove={() => clearTimeout(timer.current)}
+                onPointerUp={() => clearTimeout(timer.current)}
+                onPointerCancel={() => clearTimeout(timer.current)}
+              >
+                {match[0]}
+              </span>
+            );
+          },
+        )}
+      </span>,
+    );
+    previousEnd = right;
   }
+  passage.push(chapter.text.slice(previousEnd, end));
   return (
     <main className="reader">
       <div className="readerbar">
@@ -116,38 +204,22 @@ export function Reader(props: Props) {
         </button>
       </div>
       <div className="memory-tools" role="group" aria-label={t("readingTools")}>
-        {(["read", "highlight", "ink"] as const).map((tool) => (
-          <button
-            key={tool}
-            aria-pressed={tools.tool === tool}
-            onClick={() => {
-              clearTimeout(timer.current);
-              state.setWord(null);
-              tools.setTool(tool);
-            }}
-          >
-            {t(tool)}
-          </button>
-        ))}
-        {tools.tool === "highlight" && (
-          <select
-            aria-label={t("highlightBoundary")}
-            value={tools.boundary}
-            onChange={(event) => tools.setBoundary(event.target.value)}
-          >
-            <option value="word">{t("byWord")}</option>
-            <option value="sentence">{t("bySentence")}</option>
-          </select>
-        )}
-        {tools.tool === "ink" && strokes.length > 0 && (
-          <button
-            onClick={() =>
-              props.deleteAnnotation(strokes[strokes.length - 1].id)
-            }
-          >
-            {t("undoInk")}
-          </button>
-        )}
+        <button aria-pressed={!writing} onClick={() => setWriting(false)}>
+          {t("read")}
+        </button>
+        <button
+          aria-pressed={writing}
+          onClick={() => {
+            clearTimeout(timer.current);
+            state.setWord(null);
+            setWriting(true);
+          }}
+        >
+          {t("quillTool")}
+        </button>
+        <button disabled={!latest} onClick={undo}>
+          {t("undoStroke")}
+        </button>
       </div>
       {format && (
         <section className="options">
@@ -195,100 +267,78 @@ export function Reader(props: Props) {
           ))}
         </select>
         <h1>{chapter.title}</h1>
-        <div className="passage-layout">
+        <div className="passage-layout" data-writing={writing}>
           <div
             ref={box}
             className="passage"
-            data-tool={tools.tool}
             data-paged={!scroll}
-            {...tools.handlers}
-            onPointerMove={(event) => {
-              if (
-                event.movementX ||
-                event.movementY ||
-                event.pointerType === "touch"
-              )
-                clearTimeout(timer.current);
-              tools.handlers.onPointerMove(event);
-            }}
             style={
               {
                 "--reader-size": prefs.size + "px",
                 "--reader-line": prefs.line,
+                "--quill-cursor": `url("${quill.image}") ${quill.cursorHotspot.join(" ")}, url("${quill.cursorFallback}") ${quill.cursorHotspot.join(" ")}`,
               } as React.CSSProperties
             }
+            {...tools.handlers}
+            onContextMenu={(event) => {
+              if (writing) event.preventDefault();
+            }}
             onScroll={() => {
               const b = box.current;
-              if (scroll && b) {
-                const r = document.caretRangeFromPoint?.(
-                  b.getBoundingClientRect().left + 5,
-                  b.getBoundingClientRect().top + 8,
+              if (!scroll || !b) return;
+              const rect = b.getBoundingClientRect();
+              const top = rect.top + 2;
+              const first = [
+                ...b.querySelectorAll<HTMLElement>("[data-sentence-id]"),
+              ].find((span) => span.getBoundingClientRect().bottom > top);
+              const caret = document.caretRangeFromPoint?.(
+                rect.left + 5,
+                rect.top + 8,
+              );
+              const word =
+                caret?.startContainer.parentElement?.closest<HTMLElement>(
+                  "[data-at]",
                 );
-                const el =
-                  r?.startContainer.parentElement?.closest<HTMLElement>(
-                    "[data-at]",
-                  );
-                if (el) persist(ch, +el.dataset.at!);
-              }
+              const next =
+                word && b.contains(word)
+                  ? Number(word.dataset.at)
+                  : Number(first?.dataset.start);
+              if (Number.isFinite(next) && next !== state.offset)
+                persist(ch, next);
             }}
           >
-            {words
-              .filter(
-                (m) =>
-                  scroll ||
-                  (m.index! >= pages[page] &&
-                    m.index! < (pages[page + 1] ?? Infinity)),
-              )
-              .map((m) =>
-                /^[a-z]/i.test(m[0]) ? (
-                  <span
-                    role={reading ? "button" : undefined}
-                    tabIndex={reading ? 0 : undefined}
-                    className={
-                      ranges.some(
-                        (range) =>
-                          range.start < m.index! + m[0].length &&
-                          range.end > m.index!,
-                      )
-                        ? "reading-highlight"
-                        : undefined
-                    }
-                    key={m.index}
-                    data-at={m.index}
-                    data-end={m.index! + m[0].length}
-                    onClick={() => reading && open(m)}
-                    onKeyDown={(e) => {
-                      if (reading && e.key === "Enter") open(m);
-                    }}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      if (reading) open(m);
-                    }}
-                    onPointerDown={() =>
-                      reading &&
-                      (timer.current = setTimeout(() => open(m), 500))
-                    }
-                    onPointerMove={() => clearTimeout(timer.current)}
-                    onPointerUp={() => clearTimeout(timer.current)}
-                    onPointerCancel={() => clearTimeout(timer.current)}
-                  >
-                    {m[0]}
-                  </span>
-                ) : (
-                  m[0]
-                ),
-              )}
+            <div className="quill-text">{passage}</div>
           </div>
-          {(tools.tool === "ink" || strokes.length > 0) && (
-            <MarginInk
-              key={ch + ":" + page}
-              enabled={tools.tool === "ink"}
-              strokes={strokes}
-              label={t("inkMargin")}
-              save={saveStroke}
-            />
-          )}
+          <canvas
+            className="quill-canvas"
+            aria-hidden="true"
+            ref={tools.saved}
+          />
+          <canvas
+            className="quill-canvas"
+            aria-hidden="true"
+            ref={tools.live}
+          />
+          <img
+            className="quill-sprite"
+            aria-hidden="true"
+            alt=""
+            draggable={false}
+            ref={tools.sprite}
+            src={quill.image}
+            style={
+              {
+                "--quill-size": quill.spriteSize + "px",
+                "--quill-hotspot-x": quill.spriteHotspot[0] + "px",
+                "--quill-hotspot-y": quill.spriteHotspot[1] + "px",
+                "--quill-fade": quill.fadeMs + "ms",
+              } as React.CSSProperties
+            }
+          />
         </div>
+        {strokes.some(
+          (stroke) => stroke.kind === "quill" && stroke.fontSize !== prefs.size,
+        ) && <small role="status">{t("inkMayShift")}</small>}
         <footer>
           <button disabled={!ch && (scroll || !page)} onClick={() => turn(-1)}>
             {t("previous")}
