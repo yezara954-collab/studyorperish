@@ -1,0 +1,100 @@
+import site from "./site.json";
+export const messages = {
+  settingsCouldNotBeSaved: ["Settings could not be saved.", "设置保存失败。"],
+  unableToOpenThisBook: ["Unable to open this book.", "无法打开这本书。"],
+  bookAddedToYourShelf: ["Book added to your shelf.", "书籍已加入书架。"],
+  importFailedChooseAReadableTxtOrDrmFreeEpub: [
+    "Import failed. Choose a readable TXT or DRM-free EPUB.",
+    "导入失败，请选择可读取的 TXT 或无 DRM 的 EPUB。",
+  ],
+  bookshelf: ["Bookshelf", "书架"],
+  trashBin: ["Trash Bin", "单词垃圾桶"],
+  settings: ["Settings", "设置"],
+  privateReadingRoom: ["PRIVATE READING ROOM", "私人阅览室"],
+  wordTrashBin: ["Word Trash Bin", "单词垃圾桶"],
+  theBookshelf: ["The Bookshelf", "藏书架"],
+  wordsGatheredFromYourReading: [
+    "Words gathered from your reading.",
+    "阅读时收集的单词。",
+  ],
+  yourPersonalCollectionOfEnchantedVolumes: [
+    "Your personal collection of enchanted volumes.",
+    "你的私人魔法藏书。",
+  ],
+  myCollection: ["My collection", "我的藏书"],
+  importBook: ["Import book", "导入书籍"],
+  privateCollection: ["Private collection", "私人藏书"],
+  chapters: ["chapters", "章"],
+  volumesOnShelf: ["volumes on shelf", "册藏书"],
+  sortBy: ["Sort by", "排序"],
+  shelfOrder: ["Shelf order", "书架顺序"],
+  title: ["Title", "书名"],
+  yourBinIsEmptyOpenABookAndTapAWordToCollectIt: [
+    "Your bin is empty. Open a book and tap a word to collect it.",
+    "垃圾桶还是空的。打开书籍并点按单词即可收集。",
+  ],
+  close: ["Close", "关闭"],
+  importABook: ["Import a book", "导入书籍"],
+  chooseATxtOrDrmFreeEpubFromYourDevice: [
+    "Choose a TXT or DRM-free EPUB from your device.",
+    "从设备选择 TXT 或无 DRM 的 EPUB 文件。",
+  ],
+  bindingYourVolume: ["Binding your volume…", "正在装订…"],
+  chooseBookFile: ["Choose book file", "选择书籍文件"],
+  interfaceLanguage: ["Interface language", "界面语言"],
+  showChineseDefinitions: ["Show Chinese definitions", "显示中文释义"],
+  progressCouldNotBeSaved: [
+    "Progress could not be saved.",
+    "阅读进度保存失败。",
+  ],
+  readingSettings: ["Reading settings", "阅读设置"],
+  typeSize: ["Type size", "字号"],
+  lineSpacing: ["Line spacing", "行距"],
+  pages: ["Pages", "翻页"],
+  scroll: ["Scroll", "滚动"],
+  chapter: ["Chapter", "章节"],
+  previous: ["Previous", "上一页"],
+  page: ["Page", "页"],
+  next: ["Next", "下一页"],
+  dictionary: ["Dictionary", "词典"],
+  hideChinese: ["Hide Chinese", "隐藏中文"],
+  showChinese: ["Show Chinese", "显示中文"],
+  openingDictionary: ["Opening dictionary…", "正在查词…"],
+  dictionaryUnavailable: ["Dictionary unavailable.", "词库加载失败。"],
+  noEntryInTheOfflineEdition: [
+    "No entry in the offline edition.",
+    "离线词库未收录。",
+  ],
+  speechUnavailableOnThisDevice: [
+    "Speech unavailable on this device.",
+    "此设备无法发音。",
+  ],
+  englishVoiceUnavailable: ["English voice unavailable.", "英语语音不可用。"],
+  pronounce: ["Pronounce", "发音"],
+  couldNotSaveWord: ["Could not save word.", "单词保存失败。"],
+  savedInTrashBin: ["Saved in Trash Bin", "已存入垃圾桶"],
+  tossIntoTheTrashBin: ["Toss into the Trash Bin", "扔进单词垃圾桶"],
+  about: ["About", "关于"],
+  brand: [site.siteNameEn, site.siteNameZh],
+  english: ["English", "English"],
+  chinese: ["中文", "中文"],
+  confirmTitle: ["Switch to Chinese?", "Switch to Chinese?"],
+  languagePrompt: [
+    "“Shall we read one more page in English?”",
+    "“Shall we read one more page in English?”",
+  ],
+  confirmBody: [
+    "切换后，界面将显示中文。书籍原文会按原样呈现。",
+    "切换后，界面将显示中文。书籍原文会按原样呈现。",
+  ],
+  keepEnglish: ["Keep English", "Keep English"],
+  switchChinese: ["切换中文", "切换中文"],
+  storageUnavailable: ["Local storage is unavailable.", "本地存储不可用。"],
+  dictionarySource: ["ECDICT", "ECDICT"],
+} as const;
+export type MessageKey = keyof typeof messages;
+export type Translate = (key: MessageKey) => string;
+export const translator =
+  (language: string): Translate =>
+  (key) =>
+    messages[key][language === "zh" ? 1 : 0];

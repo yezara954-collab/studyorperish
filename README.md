@@ -1,4 +1,4 @@
-# The Vesper Archive · Stage 1
+# Study Or Perish. · Stage 1
 ## GitHub Pages 部署
 1. 解压 ZIP，新建一个公开 GitHub 仓库。将本目录的内容上传到仓库根目录，确保 docs/index.html 在此位置。
 2. 打开 Settings → Pages，Source 选择 Deploy from a branch。
@@ -9,3 +9,42 @@ docs 是已经构建好的网站，部署时无需安装 Node.js。书架、词�
 
 ## 修改源码
 使用 Node.js 22 或更新版本。执行 npm ci，然后 npm run dev。本地开发完成后运行 npm run build，将源码和更新后的 docs 一起提交。离线缓存需要 HTTPS 或 localhost，首次访问时需要联网。
+
+## 本次更新
+
+已有网站请把压缩包中的 docs/ 完整替换到现有仓库相同位置。保留原先的站点地址和 Pages 发布目录。源码放在 src/，今后改色与排版从 src/tokens.css 开始。src/site.json 配置中英文站名和资源路径，src/i18n.ts 管理界面文案，src/config.ts 管理图标、插画和角色提示语。
+
+### 新增文件
+
+- `docs/assets/index-CIZ3Jiw2.js`
+- `docs/assets/index-DkFd6vbL.css`
+- `docs/favicon.svg`
+- `src/catalog.ts`
+- `src/components/Bookshelf.tsx`
+- `src/components/Icons.tsx`
+- `src/components/TrashBin.tsx`
+- `src/components/WordCard.tsx`
+- `src/config.ts`
+- `src/i18n.ts`
+- `src/sigil.json`
+- `src/site.json`
+- `src/tokens.css`
+- `src/useLibrary.ts`
+- `src/useReader.ts`
+
+### 修改文件
+
+- `README.md`
+- `docs/index.html`
+- `docs/sw.js`
+- `index.html`
+- `src/books.ts`
+- `src/main.tsx`
+- `src/reader.tsx`
+- `src/style.css`
+- `vite.config.ts`
+
+### 删除文件
+
+- `docs/assets/index-CC7KYG1s.css`
+- `docs/assets/index-DeYpRRbP.js`
