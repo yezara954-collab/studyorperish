@@ -1,3 +1,6 @@
+import { dockSides, type DockPreferences } from "./readerDockGeometry";
+import { useViewportVariables } from "./visualViewport";
+import { AppModal, ConfirmProvider } from "./components/AppModal";
 import { roles } from "./companions";
 import {
   useCompanionRole,
@@ -16,21 +19,66 @@ import { Notebook } from "./components/Notebook";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { Reader } from "./reader";
-import { Icon, Sigil } from "./components/Icons";
+import { BottomNavigation, SiteMasthead, useTouchTabs } from "./components/AppNavigation";
 import { Bookshelf } from "./components/Bookshelf";
 import { TrashBin } from "./components/TrashBin";
 import { useLibrary } from "./useLibrary";
+import { shelfRules } from "./bookshelfStorage";
 import { Cards } from "./cards/Cards";
-import { unopenedBoxes } from "./cards/storage";
-import { illustrations, quill } from "./config";
+import { bookCompleted, unopenedBoxes } from "./cards/storage";
+import { CardsDeveloper } from "./cards/CardsDeveloper";
+import { quill } from "./config";
+import { LocalBackup } from "./newspaper/LocalBackup";
+import { resetChinesePasses, editionsChangedEvent, listEditions, purgeDeletedEditions, seedEditions } from "./newspaper/storage";
 import "./style.css";
+import "./shelfDesign.css";
+import {StyleGuide} from "./components/StyleGuide";
+
+const dockLabels = {
+  bottom: "dockBottom",
+  left: "dockLeft",
+  right: "dockRight",
+  top: "dockTop",
+} as const;
+
+const Newspaper = React.lazy(() => import("./newspaper/Newspaper"));
 
 function App() {
+  useViewportVariables();
   const library = useLibrary();
   const [companionPreview, setCompanionPreview] =
     React.useState<CompanionPreview>();
   const previewId = React.useRef(0);
   const [timerOpened, setTimerOpened] = React.useState(false);
+  const [literaryCount, setLiteraryCount] = React.useState(0);
+  const [seeding, setSeeding] = React.useState(false);
+  const touchTabs = useTouchTabs();
+  React.useEffect(() => {
+    let mounted = true;
+    function refresh(event?: Event) {
+      if ((event as CustomEvent<{ published: boolean }> | undefined)?.detail?.published &&
+          !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const button = document.querySelector<HTMLElement>("[data-literary-shelf]");
+        if (button) {
+          const styles = getComputedStyle(button);
+          const peak = styles.getPropertyValue("--literary-nav-bounce").trim();
+          button.animate?.([{ transform: "scale(1)" }, { transform: `scale(${peak})` }, { transform: "scale(1)" }],
+            { duration: Number.parseFloat(styles.getPropertyValue("--literary-nav-time")), easing: "ease-out" });
+        }
+      }
+      void purgeDeletedEditions().then(listEditions).then((items) => {
+        if (mounted) setLiteraryCount(items.filter((item) => item.issue && item.deletedAt === undefined).length);
+      }).catch(() => {});
+    }
+    refresh();
+    window.addEventListener(editionsChangedEvent, refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      mounted = false;
+      window.removeEventListener(editionsChangedEvent, refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
   const {
     view,
     bin,
@@ -40,7 +88,6 @@ function App() {
     prefs,
     setPrefs,
     collectWord,
-    setBook,
     setModal,
     nav,
     modal,
@@ -49,12 +96,38 @@ function App() {
     notice,
     setNotice,
   } = library;
+  React.useEffect(() => {
+    document.documentElement.dataset.navigation = prefs.mode;
+    document.documentElement.dataset.performance = String(prefs.performanceMode);
+  }, [prefs.mode, prefs.performanceMode]);
   const activeRole = useCompanionRole(book?.id, prefs.companion, library.ready);
   const speaker = roles.draco;
   const companionHidden = useCompanionHidden(prefs.companion.hiddenUntil);
   const unopened = React.useMemo(() => unopenedBoxes(library.cardLedger).length, [library.cardLedger]);
+  function closeModal() {
+    if (modal !== "import" || library.clearImport()) setModal("");
+  }
+  const importStatus = library.importProgress;
+  const progressText = importStatus?.stage === "pages"
+    ? t("importPages")
+        .replace("{done}", String(importStatus.done))
+        .replace("{total}", String(importStatus.total))
+    : importStatus
+      ? t(({
+          reading: "importReading",
+          extracting: "importExtracting",
+          chapters: "importChapters",
+          saving: "importSaving",
+        } as const)[importStatus.stage])
+      : "";
+  const menu = {
+    t,
+    active: modal === "settings" ? "settings" : view,
+    counts: { bin: bin.length, cards: unopened, newspaper: literaryCount },
+    choose: (id: string) => id === "settings" ? setModal("settings") : nav(id),
+  };
   return (
-    <>
+    <ConfirmProvider t={t}>
       <FocusTimer
         t={t}
         lang={prefs.lang === "zh" ? "zh-CN" : "en-US"}
@@ -67,43 +140,7 @@ function App() {
         preference={prefs.focusPartner}
         selectPartner={(focusPartner) => setPrefs({ ...prefs, focusPartner })}
         reading={Boolean(book)}
-        header={
-          <header>
-            <div className="mast">
-              <div className="brand">
-                <Sigil />
-                <span>{t("brand")}</span>
-              </div>
-              <nav>
-                {[
-                  ["shelf", "shelf", t("bookshelf")],
-                  ["bin", "bin", t("trashBin")],
-                  ["notebook", "notebook", t("notebook")],
-                  ["cards", "cards", t("cardsNav")],
-                ].map(([v, i, s]) => (
-                  <button
-                    className={view === v ? "active" : ""}
-                    key={v}
-                    onClick={() => nav(v)}
-                  >
-                    <Icon name={i} />
-                    {s}
-                    {v === "bin" && bin.length > 0 && " · " + bin.length}
-                    {v === "cards" && unopened > 0 && (
-                      <span className="cards-nav-badge" aria-label={t("cardsUnopenedCount").replace("{count}", String(unopened))}>{unopened}</span>
-                    )}
-                  </button>
-                ))}
-                <button
-                  aria-label={t("settings")}
-                  onClick={() => setModal("settings")}
-                >
-                  <Icon name="settings" />
-                </button>
-              </nav>
-            </div>
-          </header>
-        }
+        header={<SiteMasthead {...menu} touch={touchTabs || (!book && view==="shelf")} />}
       >
         {book ? (
           <Reader
@@ -117,10 +154,10 @@ function App() {
             prefs={prefs}
             setPrefs={setPrefs}
             add={collectWord}
-            onBack={() => setBook(null)}
+            onBack={library.closeBook}
             onTimer={() => setTimerOpened(true)}
-            chapterFinished={(key) => Object.hasOwn(library.cardLedger.boxes, key)}
-            onCardEarned={() => void library.cardsChanged(true)}
+            bookFinished={(key) => bookCompleted(library.cardLedger, key)}
+            onBookFinished={(earned) => void library.cardsChanged(earned)}
             onCardError={library.cardError}
             companionRole={activeRole}
             companionWords={bin}
@@ -131,80 +168,80 @@ function App() {
               prefs.companion.preview ? companionPreview : undefined
             }
           />
+        ) : view === "newspaper" ? (
+          <React.Suspense fallback={<main className="desk">{t("paperLoading")}</main>}>
+            <Newspaper
+              books={library.books}
+              username={prefs.companion.userName}
+              lang={prefs.lang}
+              t={t}
+              moving={prefs.paperPhotoMotion && !prefs.performanceMode}
+              navigation={prefs.mode}
+              performanceOverlay={prefs.performanceOverlay}
+              performanceMode={prefs.performanceMode}
+              onNotice={setNotice}
+              inkPrefs={prefs}
+              setInkPreference={(key, value) => setPrefs({ ...prefs, [key]: value })}
+              sound={prefs.focusSound}
+            />
+          </React.Suspense>
+        ) : view === "shelf" ? (
+          <Bookshelf {...library} />
+        ) : view === "bin" ? (
+          <TrashBin {...library} />
+        ) : view === "notebook" ? (
+          <Notebook {...library} />
         ) : (
-          <main className="desk">
-            <section className="banner">
-              <div>
-                <div className="eyebrow">
-                  <i /> {t("privateReadingRoom")}
-                </div>
-                <h1>
-                  {view === "bin"
-                    ? t("wordTrashBin")
-                    : view === "notebook"
-                      ? t("notebook")
-                      : t(view === "cards" ? "cardsHeading" : "theBookshelf")}
-                </h1>
-                <p>
-                  {view === "bin"
-                    ? t("wordsGatheredFromYourReading")
-                    : view === "notebook"
-                      ? t("notebookSubtitle")
-                      : t(view === "cards" ? "cardsIntro" : "yourPersonalCollectionOfEnchantedVolumes")}
-                </p>
-              </div>
-              <illustrations.Banner />
-            </section>
-            {view === "shelf" ? (
-              <Bookshelf {...library} />
-            ) : view === "notebook" ? (
-              <Notebook {...library} />
-            ) : view === "cards" ? (
-              <Cards t={t} lang={prefs.lang} ledger={library.cardLedger}
-                onChange={library.cardsChanged} onNotice={setNotice}
-                saveWord={library.collectCardWord} sound={prefs.focusSound} />
-            ) : (
-              <TrashBin {...library} />
-            )}
-          </main>
+          <Cards
+            t={t}
+            lang={prefs.lang}
+            ledger={library.cardLedger}
+            onChange={library.cardsChanged}
+            onNotice={setNotice}
+            saveWord={library.collectCardWord}
+            sound={prefs.focusSound}
+            vibration={prefs.focusVibration}
+            performanceMode={prefs.performanceMode}
+          />
         )}
       </FocusTimer>
+      {(touchTabs || view==="shelf") && !book && <BottomNavigation {...menu} />}
       {modal && (
-        <div className="veil" onClick={() => !busy && setModal("")}>
-          <dialog
-            open
-            className={
-              modal === "confirm" ? "switch-confirmation-dialog" : undefined
-            }
-            aria-labelledby={
-              modal === "confirm" ? "switch-confirmation-title" : undefined
-            }
-            style={modal === "confirm" ? centerStageVariables : undefined}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === "Escape" && !busy) setModal("");
-            }}
-          >
-            <button
-              className="close"
-              aria-label={t("close")}
-              onClick={() => setModal("")}
-            >
-              ×
-            </button>
+        <AppModal
+          key={modal}
+          t={t}
+          close={closeModal}
+          blocked={modal === "import" && importStatus?.stage === "saving"}
+          className={modal === "confirm" ? "switch-confirmation-dialog" : undefined}
+          aria-label={modal === "settings" ? t("settings") : modal === "about" ? t("about") : undefined}
+          aria-labelledby={modal === "confirm" ? "switch-confirmation-title" : modal === "import" ? "import-title" : undefined}
+          style={modal === "confirm" ? centerStageVariables : undefined}
+        >
             {modal === "import" ? (
               <>
-                <h2>{t("importABook")}</h2>
-                <p>{t("chooseATxtOrDrmFreeEpubFromYourDevice")}</p>
+                <h2 id="import-title">{t("importABook")}</h2>
+                <p>{t("importFormats")}</p>
+                {library.books.length >= shelfRules.capacity && <p>{t("shelfFull")}</p>}
                 <label className="file">
-                  {busy ? t("bindingYourVolume") : t("chooseBookFile")}
+                  {t("chooseBookFile")}
                   <input
-                    disabled={busy}
+                    disabled={busy || !library.ready || library.books.length >= shelfRules.capacity}
                     type="file"
-                    accept=".txt,.epub"
-                    onChange={(e) => ingest(e.target.files?.[0])}
+                    accept=".txt,.epub,.pdf,.docx,.doc"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      void ingest(file);
+                    }}
                   />
                 </label>
+                {importStatus && (
+                  <div className="book-import-progress">
+                    <progress max={100} value={importStatus.percent} aria-label={t("importProgress")} />
+                    <output>{progressText} · {importStatus.percent}%</output>
+                  </div>
+                )}
+                {library.importError && <p className="book-import-error" role="alert">{t(library.importError)}</p>}
               </>
             ) : modal === "settings" ? (
               <>
@@ -306,6 +343,52 @@ function App() {
                     {t("focusShake")}
                   </span>
                 </label>
+                <label className="memory-field">
+                  <span><input type="checkbox" checked={prefs.paperPhotoMotion}
+                    onChange={(event) => setPrefs({ ...prefs, paperPhotoMotion: event.target.checked })} />
+                    {" "}{t("paperPhotoMotion")}
+                  </span>
+                </label>
+                <label className="setting">
+                  {t("dockPosition")}
+                  <select value={prefs.dock.position}
+                    onChange={(event) => {
+                      const position = event.currentTarget.value as DockPreferences["position"];
+                      setPrefs({ ...prefs, dock: { ...prefs.dock, position } });
+                    }}>
+                    {dockSides.map((side) => <option key={side} value={side}>{t(dockLabels[side])}</option>)}
+                    {prefs.dock.point && <option value="custom">{t("dockCustom")}</option>}
+                  </select>
+                </label>
+                <label className="setting">
+                  <span>{t("dockAutoCollapse")}</span>
+                  <input type="checkbox" checked={prefs.dock.autoCollapse}
+                    onChange={(event) => setPrefs({ ...prefs, dock: { ...prefs.dock, autoCollapse: event.currentTarget.checked } })} />
+                </label>
+                <label className="setting">
+                  {t("navigationMode")}
+                  <select value={prefs.mode}
+                    onChange={(event) => setPrefs({ ...prefs, mode: event.target.value === "page" ? "page" : "scroll" })}>
+                    <option value="page">{t("pageTurnMode")}</option>
+                    <option value="scroll">{t("scroll")}</option>
+                  </select>
+                </label>
+                <label className="setting">
+                  <span>{t("performanceMode")}</span>
+                  <input type="checkbox" checked={prefs.performanceMode}
+                    onChange={(event) => setPrefs({ ...prefs, performanceMode: event.target.checked })} />
+                </label>
+                <label className="setting">
+                  {t("reviewDailyLimit")}
+                  <input type="number" min={1} step={1} inputMode="numeric"
+                    defaultValue={prefs.reviewDailyLimit}
+                    onChange={(event) => {
+                      const limit = event.currentTarget.valueAsNumber;
+                      if (Number.isSafeInteger(limit) && limit > 0) setPrefs({ ...prefs, reviewDailyLimit: limit });
+                    }}
+                    onBlur={(event) => { event.currentTarget.value = String(prefs.reviewDailyLimit); }}
+                  />
+                </label>
                 <CompanionSettings
                   hidden={companionHidden}
                   settings={prefs.companion}
@@ -327,10 +410,40 @@ function App() {
                     });
                     setModal("");
                   }}
-                />
+                >
+                  <label className="setting">
+                    <span>{t("inkPerformanceOverlay")}</span>
+                    <input type="checkbox" checked={prefs.performanceOverlay}
+                      onChange={(event) => setPrefs({ ...prefs, performanceOverlay: event.target.checked })} />
+                  </label>
+                  <button onClick={() => setModal("styleGuide")}>{t("styleGuide")}</button>
+                  <CardsDeveloper
+                    t={t}
+                    onChange={library.cardsChanged}
+                    onNotice={setNotice}
+                  />
+                  <button type="button" onClick={() => void resetChinesePasses()
+                    .then(() => setNotice(t("paperPassesReset")))
+                    .catch(() => setNotice(t("paperSaveFailed")))}>
+                    {t("paperResetPasses")}
+                  </button>
+                  <button type="button" disabled={seeding} onClick={() => {
+                    setSeeding(true);
+                    const samples = [
+                      { title: t("literarySampleTitle1"), body: t("literarySampleBody1") },
+                      { title: t("literarySampleTitle2"), body: t("literarySampleBody2") },
+                      { title: t("literarySampleTitle3"), body: t("literarySampleBody3") },
+                    ];
+                    void seedEditions(library.books, prefs.companion.userName.trim() || t("paperUnknownAuthor"), samples)
+                      .then(() => setNotice(t("literarySeedDone")))
+                      .catch(() => setNotice(t("paperSaveFailed")))
+                      .finally(() => setSeeding(false));
+                  }}>{t("literarySeed")}</button>
+                </CompanionDeveloper>
+                <LocalBackup t={t} onNotice={setNotice} />
                 <button onClick={() => setModal("about")}>{t("about")}</button>
               </>
-            ) : modal === "about" ? (
+            ) : modal === "styleGuide" ? (<StyleGuide t={t} back={()=>setModal("settings")}/>) : modal === "about" ? (
               <>
                 <h2>{t("about")}</h2>
                 <p>{t("brand")}</p>
@@ -367,8 +480,7 @@ function App() {
                 }}
               />
             )}
-          </dialog>
-        </div>
+        </AppModal>
       )}
       {library.cardNotice > 0 && (
         <button key={library.cardNotice} className="notice cards-arrival" role="status" onClick={library.dismissCardNotice}>
@@ -380,7 +492,7 @@ function App() {
           {notice} ×
         </button>
       )}
-    </>
+    </ConfirmProvider>
   );
 }
 createRoot(document.getElementById("root")!).render(<App />);

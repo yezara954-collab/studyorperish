@@ -58,7 +58,7 @@
   --space-banner-h1: 7px 0 6px;
   --line-height-banner-h1: 1.05;
   --font-size-banner-p: 17px;
-  --color-banner-p-color: #655740;
+  --color-banner-p-color: #4a3b29;
   --font-eyebrow: 600 12px/1.4 Georgia,
     serif;
   --letter-spacing-eyebrow: 0.17em;
@@ -193,7 +193,7 @@
   --color-caption-before-box-shadow: #160f0b;
   --box-shadow-caption-before: 0 3px 5px var(--color-caption-before-box-shadow);
   --font-size-caption-b: 18px;
-  --color-caption-span-color: #c6b79b;
+  --color-caption-span-color: var(--color-body-color);
   --space-bottom: 15px;
   --color-bottom-select-background: #2c251e;
   --space-readerbar-button: 8px 12px;
@@ -396,9 +396,6 @@
   --cards-space-2: .65rem;
   --cards-space-3: 1rem;
   --cards-space-4: 1.5rem;
-  --cards-space-5: clamp(1.1rem, 3.6vw, 2.5rem);
-  --cards-panel-gap: clamp(1.4rem, 4vw, 2.8rem);
-  --cards-tile-gap: clamp(.55rem, 1.5vw, 1rem);
   --cards-radius: .6rem;
   --cards-radius-small: .3rem;
   --cards-radius-pill: 99rem;
@@ -406,7 +403,6 @@
   --cards-outline: 2px;
   --cards-double-line: 3px;
   --cards-title-font: clamp(1.45rem, 3vw, 2.2rem);
-  --cards-series-font: clamp(1.1rem, 2vw, 1.45rem);
   --cards-body-font: .93rem;
   --cards-meta-font: .8rem;
   --cards-small-font: .69rem;
@@ -416,8 +412,6 @@
   --cards-leading: 1.16;
   --cards-icon-min: 1.25rem;
   --cards-input-height: 2.5rem;
-  --cards-grid-column: 7.7rem;
-  --cards-inventory-column: 9rem;
   --cards-meter-width: clamp(10rem, 22vw, 15rem);
   --cards-envelope-width: min(100%, 22rem);
   --cards-envelope-aspect: 1.62;
@@ -447,12 +441,34 @@
   --cards-envelope-border: var(--cards-line) solid var(--cards-envelope-fold);
   --cards-border: var(--cards-line) solid var(--cards-gold-faint);
   --cards-strong-border: var(--cards-line) solid var(--cards-gold-soft);
-  --cards-perspective: 47rem;
+  --cards-ritual-width: min(100%, 24rem);
+  --cards-ritual-meter: min(70%, 12rem);
+  --cards-warm-light: #ffebc9;
+  --cards-wax-glow: #e7a167;
+  --cards-wax-breathe: 2.6s;
+  --cards-envelope-rise-offset: 21%;
+  --cards-envelope-exit-offset: 35%;
+  --cards-fiber-top: 28%;
+  --cards-fiber-width: 5px;
+  --cards-fiber-time: 330ms;
+  --cards-edge-paper: #ffecca;
+  --cards-edge-shadow: #b89462;
+  --cards-foil-rose: #fcb4d8b3;
+  --cards-foil-mint: #bfdff29c;
+  --cards-foil-violet: #bda7f176;
+  --cards-foil-gold-center: #fff2d5d9;
+  --cards-foil-gold: #f7d473bd;
+  --cards-foil-amber: #e7985377;
+  --cards-picture-depth: 1px;
+  --cards-caption-depth: 2px;
+  --cards-foil-depth: 3px;
+  --cards-rim-depth: 4px;
+  --cards-shadow-depth: 2.25rem;
+  --cards-shadow-offset: 1.15rem;
+  --cards-flip-rise: -1.35rem;
   --cards-lift-from: 23%;
   --cards-lift-to: -7%;
-  --cards-return-time: 360ms;
   --cards-placeholder-cycle: 4s;
-  --cards-glint-cycle: 5s;
   --cards-star-cycle: 4.8s;
   --cards-burst-time: 1.12s;
   --cards-glow-time: 1.68s;
@@ -462,4 +478,362 @@
   --cards-ease-out: cubic-bezier(.15, .75, .32, 1);
   --cards-ease-rise: cubic-bezier(.16, .72, .31, 1);
   --cards-ease-flip: cubic-bezier(.33, .1, .25, 1);
+}
+
+:root {
+  --paper-surface: #eee0c3;
+  --paper-surface-light: #f6ecd5;
+  --paper-ink: #211914;
+  --paper-soft-ink: #5d4937;
+  --paper-disabled: #68625a;
+  --paper-rule: #46362a;
+  --paper-rule-muted: #836f58;
+  --paper-muted-border: #8a7257;
+  --paper-red: #772f27;
+  --paper-side: #241b14;
+  --paper-side-text: #e6d3a9;
+  --paper-selection: #dfbf99;
+  --paper-focus: #865532;
+  --paper-dark-gold: #71512d;
+  --paper-shadow: 0 12px 34px #150e0a80;
+  --paper-grain: repeating-linear-gradient(0deg, #62360f06 0 1px, transparent 1px 5px);
+  --paper-masthead-size: clamp(35px, 6vw, 84px);
+  --paper-headline-size: clamp(28px, 4.4vw, 57px);
+  --paper-story-size: clamp(16px, 1.45vw, 19px);
+  --paper-form-size: 16px;
+  --paper-small: .83rem;
+  --paper-leading: 1.58;
+  --paper-heading-leading: 1.04;
+  --paper-meta-spacing: .08em;
+  --paper-tight: .37rem;
+  --paper-gap: .75rem;
+  --paper-gutter: clamp(1rem, 2.65vw, 2.6rem);
+  --paper-margin: clamp(.78rem, 3.5vw, 3.1rem);
+  --paper-space: clamp(.9rem, 2vw, 1.4rem);
+  --paper-ink-rule: 1px solid var(--paper-rule);
+  --paper-inner-rule: 1px solid var(--paper-rule-muted);
+  --paper-double-rule: 4px double var(--paper-rule);
+  --paper-border: 1px solid var(--paper-muted-border);
+  --paper-form-outline: 2px solid var(--paper-focus);
+  --paper-field-lines: 1.8em;
+  --paper-aside: clamp(10rem, 16vw, 13rem);
+  --paper-touch-target: 2.55rem;
+  --paper-photo-height: 26rem;
+  --paper-photo-color: sepia(.39) saturate(.83) brightness(.93);
+  --paper-photo-scale: 1.045;
+  --paper-photo-cycle: 8s;
+  --paper-print-offset: 2.4rem;
+  --paper-reject-cycle: 290ms;
+  --paper-reject-distance: 2px;
+  --paper-export-width: 1060px;
+  --paper-portrait-crop: 62vw;
+}
+
+:root {
+  --literary-wood: #3c2518;
+  --literary-grain: #160c08a8;
+  --literary-grain-light: #b57f5225;
+  --literary-wood-edge: #6e462c;
+  --literary-panel: #281a13;
+  --literary-paper: #f6e9c9;
+  --literary-paper-grain: #70512d07;
+  --literary-ink-bleed: 0.55;
+  --literary-paper-rule: #cbb68e;
+  --literary-paper-shadow: #aa8052;
+  --literary-scroll-core: #fff0ca;
+  --literary-scroll-fold: #7d5738;
+  --literary-ribbon: #7b212b;
+  --literary-ribbon-light: #c36567;
+  --literary-ribbon-shadow: #3d0b16;
+  --literary-veil: #160d08e8;
+  --literary-scroll-width: clamp(5rem, 12vw, 8.75rem);
+  --literary-scroll-height: 3.65rem;
+  --literary-scroll-edge: .65rem;
+  --literary-ribbon-width: 1.2rem;
+  --literary-bow-width: 2.9rem;
+  --literary-bow-height: 1.4rem;
+  --literary-crest-size: 1.56;
+  --literary-border: 1px solid var(--literary-wood-edge);
+  --literary-rule-width: 1px;
+  --literary-shelf-plank: 9px solid var(--literary-wood-edge);
+  --literary-scroll-shadow: 0 .42rem .55rem var(--literary-grain);
+  --literary-wood-shadow: inset 0 .6rem 1.2rem var(--literary-grain);
+  --literary-shelf-column: 10rem;
+  --literary-tag-size: .83rem;
+  --literary-preview-max: 58rem;
+  --literary-ink-max: 40rem;
+  --literary-insert-max: 32rem;
+  --literary-ceremony-inset: 6dvh;
+  --literary-ceremony-width: min(94vw, 60rem);
+  --literary-ceremony-height: 80dvh;
+  --literary-roll-scale: 2.2;
+  --literary-nav-time: 360ms;
+  --literary-nav-bounce: 1.09;
+  --literary-glide: cubic-bezier(.42, .04, .23, .98);
+  --literary-bounce: cubic-bezier(.26, 1.6, .38, .98);
+}
+
+:root { --ink-performance-layer: 40; }
+
+:root {
+  --action-band: #dfc89d;
+  --action-ink: #30251b;
+  --action-button: #38281f;
+  --action-cream: #fff4dc;
+  --action-gold: #edbf62;
+  --action-danger: #712d35;
+  --action-muted: #6d5840;
+  --action-disabled-fill: #e7dcc7;
+  --action-disabled-ink: #62513d;
+  --action-min: 44px;
+  --action-gap: .5rem;
+  --action-separation: 1rem;
+  --action-border: 1px solid;
+  --action-layer: 4;
+  --action-focus: 2px solid;
+}
+
+:root {
+  --page-bottom-space: 18px;
+  --page-step-duration: 180ms;
+  --page-nudge: 12px;
+  --page-typed-photo-fraction: .3;
+  --page-paper-fraction: .76;
+  --page-handwritten-ratio: 640 / 860;
+  --page-list-placeholder: 9rem;
+}
+
+:root {
+  --texture-tile: repeating-linear-gradient(0deg, var(--color-body-background-image) 0 2px, transparent 2px 8px);
+  --texture-tile-size: 32px 32px;
+}
+
+:root {
+  --nav-surface: #2c211a;
+  --nav-text: #fff3d7;
+  --nav-rule: #a98b59;
+  --nav-selection: #e8c681;
+  --nav-selection-text: #292016;
+  --nav-badge: #fff0cc;
+  --nav-badge-text: #36281c;
+  --nav-border: 1px solid var(--nav-rule);
+  --nav-clear-border: 1px solid transparent;
+  --nav-badge-border: 1px solid var(--nav-surface);
+  --nav-focus: #ad7831;
+  --nav-focus-inset: -2px;
+  --nav-layer: 4;
+  --nav-gap: .38rem;
+  --nav-touch-gap: .2rem;
+  --nav-mast-size: clamp(3.25rem, 6vw, 4.25rem);
+  --nav-touch-mast: clamp(2.5rem, 6vw, 3.25rem);
+  --nav-brand-size: clamp(.78rem, 2.3vw, 1.45rem);
+  --nav-brand-emblem: clamp(1.15rem, 2.4vw, 2.25rem);
+  --nav-touch-brand: clamp(1.05rem, 5vw, 1.55rem);
+  --nav-desktop-label: clamp(.72rem, 1.25vw, .96rem);
+  --nav-touch-label: clamp(.61rem, 2.35vw, .82rem);
+  --nav-tabbar-height: 3.45rem;
+  --nav-bottom-space: calc(var(--nav-tabbar-height) + env(safe-area-inset-bottom, 0px));
+  --nav-count-size: 1.04rem;
+  --nav-count-padding: .21rem;
+  --nav-count-font: 700 .63rem Georgia, serif;
+}
+
+:root {
+  --nav-menu-layer: 5;
+  --shelf-viewport: 100dvh;
+  --shelf-gap: clamp(.3rem, 1.15vw, .85rem);
+  --shelf-heading-size: clamp(1rem, 2.8vw, 2rem);
+  --shelf-heading-line: 1.1;
+  --shelf-meta-size: clamp(.7rem, 1.85vw, .94rem);
+  --shelf-wood: #65472f;
+  --shelf-recess: linear-gradient(180deg, #23170f, #49311f);
+  --shelf-frame-tone: #8e6946;
+  --shelf-board-tone: #986d45;
+  --shelf-frame-rule: 1px solid var(--shelf-frame-tone);
+  --shelf-board: clamp(.16rem, .7vw, .46rem);
+  --shelf-frame: clamp(.16rem, 1vw, .72rem);
+  --shelf-plank-rule: clamp(.23rem, 1vw, .58rem) solid var(--shelf-board-tone);
+  --shelf-slot-gap: clamp(1px, .45vw, 7px);
+  --shelf-inner-edge: clamp(2px, .5vw, 8px);
+  --shelf-spine-radius: .25rem .2rem .1rem .1rem;
+  --spine-highlight: linear-gradient(90deg, #fff1 0%, transparent 15% 83%, #0005 100%);
+  --spine-border: 1px solid #d5ad7770;
+  --spine-text: #fff4df;
+  --spine-palette-0: #443546;
+  --spine-palette-1: #284438;
+  --spine-palette-2: #583d2d;
+  --spine-palette-3: #313d57;
+  --spine-palette-4: #603740;
+  --spine-palette-5: #54452e;
+  --spine-palette-6: #324a4c;
+  --spine-palette-7: #51384d;
+  --shelf-spine-menu: clamp(1.26rem, 2.4vw, 2rem);
+  --shelf-action-icon: clamp(.8rem, 2vw, 1.25rem);
+  --shelf-spine-title-start: calc(var(--shelf-spine-menu) + .16rem);
+  --shelf-spine-title-end: 1.48rem;
+  --shelf-spine-line: 1.15;
+  --shelf-spine-type: clamp(.61rem, 2.65vw, 1.14rem);
+  --shelf-spine-spacing: .012em;
+  --shelf-slot-outline: 1px dashed #d7b484;
+  --shelf-slot-fill: #31241a;
+  --shelf-empty-height: 82%;
+  --shelf-ribbon-width: clamp(.33rem, 1.28vw, .63rem);
+  --shelf-ribbon-height: .48rem;
+  --shelf-ribbon-reading-height: .73rem;
+  --shelf-ribbon-finished-height: .98rem;
+  --shelf-ribbon-edge: .23rem;
+  --shelf-ribbon-empty: #decab1;
+  --shelf-ribbon-reading: #eec070;
+  --shelf-ribbon-finished: #b5e0be;
+  --shelf-drop: #f7d492;
+  --shelf-drop-fill: #a37847;
+  --shelf-drag-opacity: .55;
+  --shelf-legend-gap: clamp(.46rem, 1.65vw, 1.1rem);
+  --shelf-motion-layer: 9;
+  --shelf-cover-perspective: 750px;
+}
+
+:root {
+  --import-progress-fill: #624623;
+}
+
+:root {
+  --review-width: 54rem;
+  --review-gap: clamp(.4rem, 1.8vw, .9rem);
+  --review-small-gap: clamp(.2rem, 1vw, .4rem);
+  --review-space: clamp(.8rem, 3vw, 1.65rem);
+  --review-title: clamp(1.35rem, 4vw, 2.1rem);
+  --review-count: clamp(1.25rem, 3.7vw, 1.9rem);
+  --review-word: 700 clamp(1.7rem, 7vw, 3.2rem)/1.13 Georgia, serif;
+  --review-label: clamp(.75rem, 2.65vw, .95rem);
+  --review-back-title: clamp(1.3rem, 3.8vw, 2rem);
+  --review-card-height: clamp(13rem, 45dvh, 23rem);
+  --review-perspective: 900px;
+  --review-flip: 260ms;
+  --review-radius: .65rem;
+  --review-paper: #f4e8cb;
+  --review-front-button: #ecd7a7;
+  --review-muted: #654b36;
+  --review-edge: 2px solid #a4835c;
+  --review-forgot: #6d3236;
+  --review-fuzzy: #63471e;
+  --review-remember: #2b4c3a;
+}
+
+:root {
+  --notebook-width: 76rem;
+  --notebook-gap: clamp(.32rem, 1.45vw, .8rem);
+  --notebook-small-gap: clamp(.23rem, .75vw, .45rem);
+  --notebook-gutter: clamp(.12rem, .8vw, .5rem);
+  --notebook-cover-width: 28rem;
+  --notebook-cover-inset: clamp(.75rem, 4vw, 2rem);
+  --notebook-cover-gap: clamp(.48rem, 2vw, 1.3rem);
+  --notebook-cover-title: clamp(1.16rem, 4vw, 2.9rem);
+  --notebook-cover-radius: .38rem .7rem .65rem .35rem;
+  --notebook-leather: #422820;
+  --notebook-leather-texture: linear-gradient(92deg, #161011 0%, #3c241e 4%, #6b4536 9%, transparent 15%), repeating-linear-gradient(111deg, #ffffff07 0 1px, transparent 2px 4px);
+  --notebook-cover-text: #fae7bb;
+  --notebook-cover-stitch: 1px solid #a17655;
+  --notebook-cover-frame: 2px double #bc9163;
+  --notebook-cover-shadow: 4px 3px 0 #c0a684, 8px 8px 0 #332221, 0 12px 30px #120a09a8;
+  --notebook-ribbon-edge: clamp(1.4rem, 4vw, 3.8rem);
+  --notebook-ribbon-width: clamp(.72rem, 1.8vw, 1.4rem);
+  --notebook-ribbon-height: clamp(1.4rem, 4.5vh, 2.8rem);
+  --notebook-ribbon-overhang: .65rem;
+  --notebook-ribbon-color: #8d2f37;
+  --notebook-paper-radius: .28rem;
+  --notebook-paper: #fbf0d6;
+  --notebook-paper-border: 1px solid #b9a481;
+  --notebook-ink: #302218;
+  --notebook-muted: #655140;
+  --notebook-note: #55453f;
+  --notebook-line: 1.57;
+  --notebook-type: clamp(.86rem, 2.45vw, 1.16rem);
+  --notebook-small: clamp(.69rem, 1.7vw, .86rem);
+  --notebook-small-line: 1.25;
+  --notebook-rule-spacing: calc(var(--notebook-type) * var(--notebook-line));
+  --notebook-lines: repeating-linear-gradient(0deg, transparent 0 calc(var(--notebook-rule-spacing) - 1px), #90877738 calc(var(--notebook-rule-spacing) - 1px) var(--notebook-rule-spacing));
+  --notebook-page-top: clamp(1rem, 4vh, 2.6rem);
+  --notebook-page-bottom: clamp(.25rem, 1vw, .72rem);
+  --notebook-inner-left: clamp(2.02rem, 6.9vw, 4.15rem);
+  --notebook-inner-right: clamp(1.5rem, 4.3vw, 3rem);
+  --notebook-margin: calc(var(--notebook-inner-left) - .48rem);
+  --notebook-margin-border: 1px solid #aa5263c7;
+  --notebook-page-footer: 1.25rem;
+  --notebook-entry-gap: clamp(.45rem, 1.2vw, .92rem);
+  --notebook-entry-tail: .18rem;
+  --notebook-toc-heading: clamp(1.2rem, 3vw, 1.85rem);
+  --notebook-edge-width: clamp(1.3rem, 4vw, 2.6rem);
+  --notebook-edge-type: 1.18rem;
+  --notebook-options-size: 1.55rem;
+  --notebook-control-size: clamp(.72rem, 2.15vw, .93rem);
+  --notebook-page-input: clamp(2.4rem, 8vw, 4.4rem);
+  --notebook-filter-width: 19rem;
+  --notebook-turn-time: 180ms;
+  --notebook-turn-offset: clamp(.95rem, 4vw, 2.5rem);
+  --notebook-note-editor: 7rem;
+}
+
+:root {
+  --cards-shelf-width: 77rem;
+  --cards-shelf-gap: clamp(.32rem, 1.1vmin, .85rem);
+  --cards-shelf-control-font: clamp(.69rem, 1.5vw, .86rem);
+  --cards-shelf-heading-font: clamp(1.05rem, 2.8vw, 1.8rem);
+  --cards-shelf-name-font: clamp(.76rem, 1.65vw, 1.1rem);
+  --cards-shelf-micro-font: clamp(.62rem, 1.45vw, .82rem);
+  --cards-shelf-icon-font: system-ui, sans-serif;
+  --cards-shelf-control-height: clamp(1.6rem, 5vh, 2.25rem);
+  --cards-shelf-wood: #4c2e24;
+  --cards-shelf-wood-dark: #291b17;
+  --cards-shelf-ledge: #8a5a3e;
+  --cards-shelf-ledge-size: clamp(.2rem, .8vh, .5rem);
+  --cards-shelf-grain: repeating-linear-gradient(176deg, #f4c88f0b 0 1px, transparent 1px 13px, #170d0b20 13px 14px, transparent 14px 21px);
+  --cards-shelf-well: linear-gradient(180deg, var(--cards-shelf-wood-dark), var(--cards-shelf-wood));
+  --cards-shelf-shadow: inset 0 .2rem .6rem var(--cards-shadow);
+  --cards-shelf-envelope-width: clamp(4.6rem, 13vmin, 7rem);
+  --cards-shelf-envelope-height: clamp(2.5rem, 10vh, 5rem);
+  --cards-landscape-inventory: clamp(8rem, 23vw, 17rem);
+  --cards-hand-face: min(46cqw, 56cqh, 9rem);
+  --cards-pile-face: min(54cqw, 65cqh, 9rem);
+  --cards-discovery-face: min(48cqw, 63cqh, 10rem);
+  --cards-stack-shift: .22rem;
+  --cards-stack-turn: 4deg;
+  --cards-tray-width: 65rem;
+  --cards-tray-height: 46rem;
+  --cards-tray-card-width: 11rem;
+  --cards-tray-gap: clamp(.25rem, 1.4vmin, .85rem);
+  --cards-tray-card-font: clamp(.68rem, 1.4vw, 1.02rem);
+}
+
+:root {
+  --modal-gap: clamp(.3rem, 1vmin, .65rem);
+  --modal-padding: clamp(.75rem, 2.5vmin, 1.5rem);
+  --modal-close-bg: var(--cards-gold-bright);
+  --modal-close-fg: var(--cards-ink);
+  --modal-grip-width: 2.4rem;
+  --modal-grip-height: .24rem;
+  --card-view-width: min(52rem, 94vw);
+  --card-view-chrome: 7.6rem;
+}
+
+:root {
+  --dock-gap: clamp(.24rem, 1vmin, .6rem);
+  --dock-z: 10;
+  --dock-bg: var(--cards-panel);
+  --dock-fg: var(--cards-paper-light);
+  --dock-shadow: var(--cards-panel-shadow);
+  --dock-width: 38rem;
+  --dock-height: 12rem;
+  --dock-control-height: 2rem;
+  --dock-icon: 1.4rem;
+  --dock-font: clamp(.75rem, 2.2vmin, .9rem);
+}
+
+/* Illustrated shelf and shared navigation */
+:root{
+ --folio-night:#252b3c;--folio-indigo:#414956;--folio-gold:#dfbb78;--folio-paper:#eed5ae;--folio-wood:#786353;--folio-ink:#332619;--folio-walnut:#523c2e;--folio-danger:#783c39;
+ --folio-serif:"Shelf Serif","Songti SC","Noto Serif CJK SC",Georgia,serif;
+ --folio-board:url('/assets/shelf/frame-wood-tile.webp');--folio-paper-skin:url('/assets/shelf/banner-parchment.webp');--folio-rule:1px solid var(--folio-gold);--folio-bevel:inset 0 0 0 1px var(--folio-walnut),inset 0 0 0 3px var(--folio-gold);
+ --folio-primary:linear-gradient(#f3d798,#d9ad67);--folio-secondary:var(--folio-walnut);--folio-badge:var(--folio-gold);--folio-tooltip:var(--folio-ink);
+ --folio-title:clamp(24px,3.2vw,50px);--folio-text:clamp(16px,1.5vw,24px);--folio-small:clamp(13px,1.32vw,20px);
 }
